@@ -1,6 +1,6 @@
 // Offline support: the app shell is cached so the app opens without a connection.
 // Firestore keeps its own offline copy of the records, so data requests are not touched here.
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 const SHELL_FILES = [
