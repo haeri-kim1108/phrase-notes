@@ -1,18 +1,19 @@
 // Offline support: the app shell is cached so the app opens without a connection.
 // Firestore keeps its own offline copy of the records, so data requests are not touched here.
-const VERSION = 'v2';
+const VERSION = 'v3';
 const SHELL = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 const SHELL_FILES = [
   './', './index.html', './firebase-config.js', './manifest.webmanifest',
-  './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png',
+  './icons/icon-192.png?v=2', './icons/icon-512.png?v=2', './icons/apple-touch-icon.png?v=2', './icons/favicon-32.png?v=2',
 ];
 const FIREBASE_SDK = ['app', 'auth', 'firestore'].map(n => `https://www.gstatic.com/firebasejs/10.14.1/firebase-${n}-compat.js`);
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const shell = await caches.open(SHELL);
-    await shell.addAll(SHELL_FILES);
+    // cache: 'reload' skips the browser's HTTP cache so a new version never stores stale files
+    await shell.addAll(SHELL_FILES.map(u => new Request(u, { cache: 'reload' })));
     const rt = await caches.open(RUNTIME);
     await Promise.all(FIREBASE_SDK.map(u => rt.add(u).catch(() => {})));
     await self.skipWaiting();
