@@ -1,0 +1,972 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F1F4F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F141B" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="표현 복습">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='6' y='12' width='44' height='34' rx='6' fill='%23BFCBF5'/%3E%3Crect x='14' y='18' width='44' height='34' rx='6' fill='%232747C9'/%3E%3Cpath d='M24 36h24M24 28h16' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<title>표현 복습 노트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Fredoka:wght@400;500;600&display=swap">
+<style>
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+[hidden]{display:none!important}
+:root{
+  --bg:#F1F4F7; --surface:#FFFFFF; --surface-2:#E7ECF2; --line:#D5DDE6;
+  --ink:#18212C; --muted:#5A6676; --faint:#8A95A3;
+  --accent:#2747C9; --accent-ink:#FFFFFF; --accent-soft:#E3E9FB;
+  --mark:rgba(245,208,60,.55);
+  --again:#C23F35; --hard:#B97A10; --good:#2B8453; --easy:#2747C9;
+  --again-soft:#F8E4E2; --hard-soft:#F6ECD8; --good-soft:#DFF1E6; --easy-soft:#E3E9FB;
+  --shadow:0 1px 2px rgba(24,33,44,.06),0 8px 24px rgba(24,33,44,.06);
+  --serif:"Fredoka","Arial Rounded MT Bold","Segoe UI",system-ui,sans-serif;
+  --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0F141B; --surface:#171E27; --surface-2:#1F2833; --line:#2B3643;
+    --ink:#E5EAF0; --muted:#9AA6B4; --faint:#6D7988;
+    --accent:#8DA4FF; --accent-ink:#0F141B; --accent-soft:#1F2A4A;
+    --mark:rgba(245,208,60,.28);
+    --again:#F07C72; --hard:#E2AE4F; --good:#63C28C; --easy:#8DA4FF;
+    --again-soft:#3A2020; --hard-soft:#3A2F1A; --good-soft:#1B3527; --easy-soft:#1F2A4A;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0F141B; --surface:#171E27; --surface-2:#1F2833; --line:#2B3643;
+  --ink:#E5EAF0; --muted:#9AA6B4; --faint:#6D7988;
+  --accent:#8DA4FF; --accent-ink:#0F141B; --accent-soft:#1F2A4A;
+  --mark:rgba(245,208,60,.28);
+  --again:#F07C72; --hard:#E2AE4F; --good:#63C28C; --easy:#8DA4FF;
+  --again-soft:#3A2020; --hard-soft:#3A2F1A; --good-soft:#1B3527; --easy-soft:#1F2A4A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;padding-inline:16px;padding-block:0 64px}
+.wrap{max-width:860px;margin:0 auto}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono)}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);padding-block:14px 10px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand b{font-family:var(--serif);font-weight:500;font-size:22px;letter-spacing:-.01em;line-height:1}
+.brand span{font-size:12px;color:var(--muted)}
+.tabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:10px}
+.tabs button{border:0;background:transparent;padding:6px 14px;border-radius:7px;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:6px}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.badge{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:600;display:inline-grid;place-items:center}
+.badge[data-zero]{display:none}
+
+.banner{margin-top:14px;padding:10px 14px;border-radius:10px;background:var(--hard-soft);color:var(--ink);font-size:13px}
+main{padding-top:24px}
+.view{display:grid;gap:28px}
+h1,h2,h3{margin:0;text-wrap:balance}
+h1{font-family:var(--serif);font-weight:500;font-size:clamp(26px,4.4vw,36px);line-height:1.2;letter-spacing:-.01em}
+h2{font-size:16px;font-weight:600}
+.eyebrow{font-size:12px;letter-spacing:.06em;color:var(--muted);font-weight:500}
+.sub{color:var(--muted);margin:6px 0 0}
+.section-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.hint{font-size:13px;color:var(--muted)}
+
+/* buttons */
+.btn{border:1px solid var(--line);background:var(--surface);padding:9px 16px;border-radius:9px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn:hover{border-color:var(--faint)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.primary:disabled{opacity:.45;cursor:default;filter:none}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--ink);background:var(--surface-2)}
+.btn.danger{color:var(--again)}
+.btn.lg{padding:13px 22px;font-size:16px;border-radius:11px}
+
+/* today */
+.hero{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:end}
+@media (max-width:620px){.hero{grid-template-columns:1fr}}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+@media (max-width:620px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--surface);padding:14px 16px;display:grid;gap:2px}
+.stat .k{font-size:12px;color:var(--muted)}
+.stat .v{font-size:28px;font-weight:600;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat .v small{font-size:14px;color:var(--muted);font-weight:500}
+.stat .d{font-size:12px;color:var(--faint)}
+.meter{height:5px;border-radius:3px;background:var(--surface-2);overflow:hidden;margin-top:6px}
+.meter i{display:block;height:100%;background:var(--good);border-radius:3px}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px}
+.chart-wrap{overflow-x:auto}
+.chart-wrap svg{display:block;width:100%;min-width:520px;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:18px;height:0;border-top:2px solid var(--accent);vertical-align:middle;margin-right:6px}
+.legend i.dash{border-top:2px dashed var(--faint)}
+.note{font-size:13px;color:var(--muted);margin:10px 0 0;max-width:65ch}
+
+.ladder{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}
+.ladder span{font-family:var(--mono);font-size:13px;padding:4px 10px;border-radius:999px;background:var(--surface-2)}
+.ladder em{color:var(--faint);font-style:normal;font-size:12px}
+
+.two{display:grid;grid-template-columns:1.2fr 1fr;gap:20px}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+
+/* pills */
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.new{background:var(--easy-soft);color:var(--easy)}
+.pill.short{background:var(--again-soft);color:var(--again)}
+.pill.mid{background:var(--hard-soft);color:var(--hard)}
+.pill.long{background:var(--good-soft);color:var(--good)}
+.tag{font-size:12px;color:var(--muted);background:var(--surface-2);padding:1px 8px;border-radius:5px}
+
+/* review */
+.rv-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.progress{flex:1;min-width:160px;height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.flash{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:28px clamp(20px,5vw,44px);min-height:320px;display:flex;flex-direction:column;gap:18px;position:relative;
+  background-image:repeating-linear-gradient(to bottom,transparent 0 35px,var(--surface-2) 35px 36px);background-position:0 88px}
+.flash-meta{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.front{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.front .en{font-family:var(--serif);font-weight:500;font-size:clamp(30px,6vw,46px);line-height:1.2;letter-spacing:-.01em;word-break:break-word}
+.front .ko{font-size:clamp(22px,4.5vw,30px);font-weight:600;line-height:1.35}
+.front-hint{color:var(--muted);font-size:14px}
+.speak{border:1px solid var(--line);background:var(--surface);width:38px;height:38px;border-radius:50%;display:inline-grid;place-items:center;cursor:pointer;color:var(--muted);flex:none;margin-top:6px}
+.speak:hover{color:var(--accent);border-color:var(--accent)}
+.back{border-top:1px dashed var(--line);padding-top:18px;display:grid;gap:12px}
+.back .ans-ko{font-size:20px;font-weight:600}
+.back .ans-en{font-family:var(--serif);font-weight:500;font-size:28px;line-height:1.15}
+.ex{font-family:var(--serif);font-size:19px;line-height:1.45}
+.ex mark{background:linear-gradient(transparent 45%,var(--mark) 45%);color:inherit;padding:0 2px}
+.exko{color:var(--muted);font-size:14px;margin-top:-6px}
+.memo{font-size:14px;background:var(--surface-2);border-radius:8px;padding:8px 12px}
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:520px){.actions{grid-template-columns:repeat(2,1fr)}}
+.grade{border:1px solid transparent;border-radius:12px;padding:12px 8px;cursor:pointer;display:grid;gap:2px;text-align:center;font-weight:600}
+.grade small{font-family:var(--mono);font-weight:400;font-size:12px;opacity:.85}
+.grade kbd{font-family:var(--mono);font-size:10px;opacity:.6;font-weight:400}
+.grade.again{background:var(--again-soft);color:var(--again)}
+.grade.hard{background:var(--hard-soft);color:var(--hard)}
+.grade.good{background:var(--good-soft);color:var(--good)}
+.grade.easy{background:var(--easy-soft);color:var(--easy)}
+.grade:hover{border-color:currentColor}
+.reveal{width:100%}
+.empty{text-align:center;padding:48px 20px;display:grid;gap:12px;justify-items:center}
+.empty .big{font-family:var(--serif);font-size:28px;line-height:1.15}
+.summary{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+
+/* form */
+form{display:grid;gap:14px}
+.field{display:grid;gap:5px}
+.field label{font-size:13px;font-weight:500;color:var(--muted)}
+.field label b{color:var(--again);font-weight:500}
+input[type=text],input[type=search],input[type=number],textarea,select{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:10px 12px;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+#f-en{font-family:var(--serif);font-size:21px;padding:8px 12px}
+textarea{resize:vertical;min-height:70px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:560px){.row2{grid-template-columns:1fr}}
+.flabel{font-size:13px;font-weight:500;color:var(--muted)}
+.flabel .faint{color:var(--faint);font-weight:400;margin-left:4px}
+.ex-list{display:grid;gap:10px}
+.ex-row{display:grid;grid-template-columns:22px minmax(0,1fr) 36px;gap:8px;align-items:start}
+.ex-row .row2{gap:8px}
+.ex-row textarea{min-height:58px}
+.ex-n{font-family:var(--mono);font-size:12px;color:var(--faint);padding-top:11px;text-align:center}
+.ex-del{width:36px;height:36px;padding:0;margin-top:4px;font-size:18px;line-height:1}
+.exs{display:grid;gap:14px}
+.ex-item{display:grid;gap:4px}
+.ex-item .exko{margin-top:0}
+.form-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+details summary{cursor:pointer;font-weight:500}
+details[open] summary{margin-bottom:10px}
+.mini-list{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.mini-list li{display:flex;gap:10px;align-items:baseline;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)}
+.mini-list li:last-child{border-bottom:0}
+.mini-list .en{font-family:var(--serif);font-size:17px}
+
+/* library */
+.lib-tools{display:grid;gap:10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.lib{display:grid;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
+.item{border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item-row{display:grid;grid-template-columns:1fr auto;gap:4px 16px;padding:14px 18px;cursor:pointer;width:100%;text-align:left;background:none;border:0}
+.item-row:hover{background:var(--surface-2)}
+.item-row .en{font-family:var(--serif);font-size:19px;line-height:1.2}
+.item-row .ko{color:var(--muted);font-size:14px}
+.item-row .right{display:grid;justify-items:end;gap:4px;align-content:start}
+.due{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.due.now{color:var(--accent);font-weight:500}
+.item-detail{padding:0 18px 16px;display:grid;gap:10px}
+.item-detail .ex{font-size:17px}
+.facts{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px;color:var(--muted);font-family:var(--mono)}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.gate{max-width:460px;margin:8vh auto 0;text-align:center;display:grid;gap:14px;justify-items:center}
+.gate .big{font-family:var(--serif);font-size:30px;font-weight:500;line-height:1.25}
+.gate .btn{padding:12px 20px;font-size:15px}
+.acct{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:10px;font-size:14px;z-index:50;box-shadow:var(--shadow)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><b>표현 복습 노트</b></div>
+    <nav class="tabs" role="tablist" id="tabs">
+      <button role="tab" data-tab="today" aria-selected="true">오늘</button>
+      <button role="tab" data-tab="review" aria-selected="false">복습 <span class="badge num" id="due-badge" data-zero>0</span></button>
+      <button role="tab" data-tab="add" aria-selected="false">추가</button>
+      <button role="tab" data-tab="library" aria-selected="false">목록</button>
+    </nav>
+  </header>
+  <div class="banner" id="banner" hidden></div>
+
+  <main>
+    <!-- SIGN IN -->
+    <section class="view" id="view-signin" hidden>
+      <div class="gate">
+        <div class="big">오늘 배운 표현,<br>잊기 전에 다시 만나요</div>
+        <p class="hint" style="margin:0">Google 계정으로 로그인하면 표현과 복습 기록이 내 Firebase에 저장되고, 폰과 컴퓨터에서 같은 기록을 볼 수 있습니다.</p>
+        <button class="btn primary" id="sign-in">Google 계정으로 로그인</button>
+      </div>
+    </section>
+
+    <!-- TODAY -->
+    <section class="view" id="view-today">
+      <div class="hero">
+        <div>
+          <div class="eyebrow" id="today-date"></div>
+          <h1 id="today-title">오늘의 복습을 불러오는 중입니다</h1>
+          <p class="sub" id="today-sub">잠시만 기다려 주세요.</p>
+        </div>
+        <button class="btn primary lg" id="start-btn" disabled>복습 시작</button>
+      </div>
+
+      <div class="stats" id="stats"></div>
+
+      <div class="two">
+        <div class="panel">
+          <div class="section-head"><h2>앞으로 14일 복습 예정</h2><span class="hint" id="forecast-total"></span></div>
+          <div class="chart-wrap" id="forecast"></div>
+        </div>
+        <div class="panel">
+          <div class="section-head"><h2>복습 간격 단계</h2></div>
+          <p class="hint" style="margin:0 0 10px">‘알맞음’을 누를 때마다 다음 단계로 넘어갑니다. ‘다시’를 누르면 처음 단계로 돌아가고 오늘 한 번 더 나옵니다.</p>
+          <div class="ladder" id="ladder"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-head"><h2>설정</h2></div>
+        <div class="settings">
+          <div class="field">
+            <label for="s-goal">하루 새 표현 목표</label>
+            <input type="number" id="s-goal" min="1" max="50" value="5">
+          </div>
+          <div class="field">
+            <label for="s-dir">복습 카드 방향</label>
+            <select id="s-dir">
+              <option value="ko" selected>뜻 보고 영어 떠올리기</option>
+              <option value="en">영어 보고 뜻 떠올리기</option>
+              <option value="mix">섞어서</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-head"><h2>계정과 백업</h2></div>
+        <div class="acct"><span class="hint" id="acct-who"></span><button class="btn ghost" id="sign-out" hidden>로그아웃</button></div>
+        <div class="form-actions">
+          <button class="btn" type="button" id="export-btn">백업 파일 내려받기</button>
+          <label class="btn" for="import-file">백업 파일 불러오기</label>
+          <input type="file" id="import-file" accept=".json,application/json" hidden>
+          <span class="hint" id="backup-msg"></span>
+        </div>
+        <p class="hint" style="margin:10px 0 0">백업 파일(JSON)에는 모든 표현과 복습 기록이 들어 있습니다. 가끔 내려받아 두면 어떤 서비스를 쓰든 기록을 옮길 수 있습니다.</p>
+      </div>
+    </section>
+
+    <!-- REVIEW -->
+    <section class="view" id="view-review" hidden></section>
+
+    <!-- ADD -->
+    <section class="view" id="view-add" hidden>
+      <div>
+        <div class="eyebrow" id="add-eyebrow">새 표현</div>
+        <h1 id="add-title">오늘 배운 표현 기록하기</h1>
+        <p class="sub">추가한 표현은 오늘 한 번 확인한 뒤 1일, 3일, 7일 간격으로 복습 목록에 다시 나타납니다.</p>
+      </div>
+      <div class="panel">
+        <form id="add-form" autocomplete="off">
+          <div class="field">
+            <label for="f-en">영어 표현 <b>*</b></label>
+            <input type="text" id="f-en" required placeholder="예: break the ice">
+          </div>
+          <div class="field">
+            <label for="f-ko">뜻 <b>*</b></label>
+            <input type="text" id="f-ko" required placeholder="예: 어색한 분위기를 깨다">
+          </div>
+          <div class="field">
+            <span class="flabel">예문과 해석 <span class="faint">여러 개 적을 수 있어요</span></span>
+            <div class="ex-list" id="ex-list"></div>
+            <div><button class="btn ghost" type="button" id="ex-add">+ 예문 추가</button></div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="f-note">메모 (뉘앙스, 비슷한 표현)</label>
+              <input type="text" id="f-note" placeholder="회의나 첫 만남에서 자주 씀">
+            </div>
+            <div class="field">
+              <label for="f-tags">태그 (쉼표로 구분)</label>
+              <input type="text" id="f-tags" placeholder="회화, 비즈니스">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn primary" type="submit" id="f-submit">표현 저장</button>
+            <button class="btn ghost" type="button" id="f-cancel" hidden>수정 취소</button>
+            <span class="hint" id="f-msg"></span>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel">
+        <details id="bulk">
+          <summary>여러 표현 한 번에 추가</summary>
+          <div class="field">
+            <label for="bulk-text">한 줄에 하나씩, <span class="mono">표현 | 뜻 | 예문 | 예문 해석</span> 순서로 적어 주세요. 예문은 생략할 수 있고, 뒤에 <span class="mono">| 예문2 | 해석2</span>처럼 이어 쓰면 여러 개가 됩니다.</label>
+            <textarea id="bulk-text" rows="5" placeholder="hit the road | 떠나다, 출발하다 | It's getting late, so I'd better hit the road.&#10;cut corners | (시간·돈을 아끼려) 대충 하다"></textarea>
+          </div>
+          <div class="form-actions" style="margin-top:10px">
+            <button class="btn" type="button" id="bulk-add">모두 추가</button>
+            <span class="hint" id="bulk-msg"></span>
+          </div>
+        </details>
+      </div>
+
+      <div class="panel">
+        <div class="section-head"><h2>오늘 추가한 표현</h2><span class="hint num" id="added-count"></span></div>
+        <ul class="mini-list" id="added-list"></ul>
+      </div>
+    </section>
+
+    <!-- LIBRARY -->
+    <section class="view" id="view-library" hidden>
+      <div class="section-head" style="margin:0">
+        <div>
+          <div class="eyebrow">내 표현</div>
+          <h1 id="lib-title">표현 목록</h1>
+        </div>
+        <button class="btn danger" id="clear-examples" hidden>예시 표현 모두 삭제</button>
+      </div>
+      <div class="lib-tools">
+        <input type="search" id="lib-q" placeholder="표현, 뜻, 태그로 검색">
+        <div class="chips" id="lib-chips"></div>
+      </div>
+      <div id="lib-list"></div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+(function(){
+'use strict';
+/* ---------- time helpers ---------- */
+function dayStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function today(){return dayStr(new Date());}
+function addDays(s,n){var p=s.split('-').map(Number);return dayStr(new Date(p[0],p[1]-1,p[2]+n));}
+function diffDays(a,b){var x=a.split('-').map(Number),y=b.split('-').map(Number);return Math.round((Date.UTC(y[0],y[1]-1,y[2])-Date.UTC(x[0],x[1]-1,x[2]))/86400000);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function uid(){return 'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+
+/* ---------- spaced repetition ---------- */
+// Days until the next review after each successful review (stage = successful reviews so far)
+var INTERVALS=[1,3,7,14,30,60,120,240];
+function iv(s){return INTERVALS[Math.min(Math.max(s,0),INTERVALS.length-1)];}
+function schedule(card,g){
+  var s=card.stage||0;
+  if(g==='again') return {stage:0,interval:0};
+  if(g==='hard')  return {stage:s,interval:s===0?1:iv(s-1)};
+  if(g==='good')  return {stage:s+1,interval:iv(s)};
+  return {stage:s+2,interval:iv(s+1)}; // easy
+}
+function stageInfo(s){
+  if(!s) return {k:'new',t:'새 표현'};
+  if(s<=2) return {k:'short',t:'단기 기억'};
+  if(s<=4) return {k:'mid',t:'정착 중'};
+  return {k:'long',t:'장기 기억'};
+}
+function ivLabel(n){return n===0?'오늘 다시':n<30?n+'일 후':n<365?Math.round(n/30)+'개월 후':'1년 후';}
+function dueLabel(c,t){
+  var d=diffDays(t,c.due);
+  if(d<0) return {t:(-d)+'일 밀림',now:true};
+  if(d===0) return {t:'오늘 복습',now:true};
+  if(d===1) return {t:'내일',now:false};
+  return {t:d+'일 후',now:false};
+}
+
+/* ---------- state + storage (Firebase) ---------- */
+var state={cards:new Map(),stats:{days:{}},settings:{goal:5,dir:'ko'},ready:false,mode:null};
+var fdb=null, user=null, unsubs=[], LKEY='phrase-notes-v1';
+function cardBody(c){var o={};for(var k in c){if(k!=='id'&&c[k]!==undefined)o[k]=c[k];}return o;}
+
+function loadLocal(){
+  try{var raw=localStorage.getItem(LKEY);if(raw){var o=JSON.parse(raw);(o.cards||[]).forEach(function(c){state.cards.set(c.id,c);});if(o.stats)state.stats=o.stats;if(o.settings)state.settings=Object.assign(state.settings,o.settings);}}catch(e){}
+}
+function saveLocal(){
+  try{localStorage.setItem(LKEY,JSON.stringify({cards:Array.from(state.cards.values()),stats:state.stats,settings:state.settings}));}catch(e){}
+}
+function userDoc(path){return fdb.doc('users/'+user.uid+'/'+path);}
+// Firestore applies writes locally right away and syncs them in order, even offline
+function persist(path,getBody){
+  if(state.mode!=='cloud'){saveLocal();return;}
+  var b=getBody();
+  (b===null?userDoc(path).delete():userDoc(path).set(b)).catch(onWriteError);
+}
+function onWriteError(e){
+  var code=e&&e.code;
+  if(code==='permission-denied') showBanner('저장 권한이 없습니다. Firebase 콘솔에서 Firestore 보안 규칙을 README대로 설정했는지 확인해 주세요.');
+  else if(code==='resource-exhausted') showBanner('Firebase 무료 사용량을 넘었습니다. 내일 다시 시도해 주세요.');
+  else showBanner('저장하지 못한 변경이 있습니다. 네트워크 연결을 확인해 주세요. ('+(code||'unknown')+')');
+}
+function putCard(c){state.cards.set(c.id,c);render();persist('cards/'+c.id,function(){var x=state.cards.get(c.id);return x?cardBody(x):null;});}
+function removeCard(id){state.cards.delete(id);render();persist('cards/'+id,function(){return state.cards.has(id)?cardBody(state.cards.get(id)):null;});}
+function putMeta(name){persist('meta/'+name,function(){return state[name];});}
+function bumpStat(field,n){
+  var t=today();var d=state.stats.days||(state.stats.days={});
+  var cur=Object.assign({added:0,reviewed:0},d[t]||{});cur[field]=(cur[field]||0)+n;
+  state.stats=Object.assign({},state.stats,{days:Object.assign({},d,{[t]:cur})});
+  putMeta('stats');
+}
+
+function configured(){
+  var c=window.FIREBASE_CONFIG;
+  return !!(window.firebase&&c&&c.apiKey&&c.projectId&&!/^YOUR_/.test(c.apiKey));
+}
+function resetState(){state.cards=new Map();state.stats={days:{}};state.settings={goal:5,dir:'ko'};state.ready=false;session=null;}
+function boot(){
+  renderStatic();
+  if(!configured()){
+    state.mode='local';loadLocal();state.ready=true;
+    showBanner('Firebase 설정이 아직 없어 이 브라우저에만 저장됩니다. firebase-config.js를 채워 주세요.');
+    syncSettingsInputs();renderAccount();render();return;
+  }
+  firebase.initializeApp(window.FIREBASE_CONFIG);
+  fdb=firebase.firestore();
+  fdb.enablePersistence({synchronizeTabs:true}).catch(function(){});
+  firebase.auth().getRedirectResult().catch(authError);
+  state.mode='connecting';render();
+  firebase.auth().onAuthStateChanged(function(u){
+    unsubs.forEach(function(f){f();});unsubs=[];
+    user=u;resetState();
+    if(u){state.mode='cloud';connectCloud();}else state.mode='signedout';
+    syncSettingsInputs();renderAccount();render();
+  });
+}
+function connectCloud(){
+  var fail=function(e){
+    showBanner(e&&e.code==='permission-denied'
+      ?'기록을 읽을 권한이 없습니다. Firebase 콘솔에서 Firestore 보안 규칙을 README대로 설정해 주세요.'
+      :'표현을 불러오지 못했습니다. 페이지를 새로고침해 주세요.');
+  };
+  unsubs.push(fdb.collection('users/'+user.uid+'/cards').onSnapshot(function(snap){
+    var m=new Map();snap.docs.forEach(function(d){m.set(d.id,Object.assign({id:d.id},d.data()));});
+    state.cards=m;state.ready=true;render();
+  },fail));
+  unsubs.push(userDoc('meta/stats').onSnapshot(function(s){if(s.exists){state.stats=Object.assign({days:{}},s.data());render();}},fail));
+  unsubs.push(userDoc('meta/settings').onSnapshot(function(s){if(s.exists){state.settings=Object.assign({goal:5,dir:'ko'},s.data());syncSettingsInputs();render();}},fail));
+}
+function signIn(){
+  var p=new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(p).catch(function(e){
+    if(e&&(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment')) return firebase.auth().signInWithRedirect(p).catch(authError);
+    authError(e);
+  });
+}
+function authError(e){
+  if(!e||e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request') return;
+  if(e.code==='auth/unauthorized-domain') showBanner('이 주소가 Firebase 승인된 도메인에 없습니다. Firebase 콘솔 > Authentication > 설정 > 승인된 도메인에 '+location.hostname+'을(를) 추가해 주세요.');
+  else if(e.code==='auth/operation-not-allowed') showBanner('Firebase에서 Google 로그인이 켜져 있지 않습니다. Authentication > 로그인 방법에서 Google을 사용 설정해 주세요.');
+  else showBanner('로그인하지 못했습니다. ('+e.code+')');
+}
+
+/* ---------- backup ---------- */
+function exportData(){
+  var data={app:'phrase-notes',version:1,exportedAt:new Date().toISOString(),cards:Array.from(state.cards.values()),stats:state.stats,settings:state.settings};
+  var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='phrase-notes-backup-'+today()+'.json';
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1000);
+  $('backup-msg').textContent='표현 '+data.cards.length+'개를 백업 파일로 저장했습니다.';
+}
+function importData(o){
+  var n=0,skip=0,ops=[];
+  o.cards.forEach(function(c){
+    if(!c||!c.id||!c.en||!/^[A-Za-z0-9_-]{1,100}$/.test(c.id)){skip++;return;}
+    var cur=state.cards.get(c.id);
+    // keep the copy that has been reviewed more
+    if(cur&&(cur.reps||0)>(c.reps||0)){skip++;return;}
+    state.cards.set(c.id,c);ops.push(['cards/'+c.id,cardBody(c)]);n++;
+  });
+  if(o.stats&&o.stats.days){
+    var days=Object.assign({},state.stats.days||{});
+    Object.keys(o.stats.days).forEach(function(k){
+      var a=days[k]||{},b=o.stats.days[k]||{};
+      days[k]={added:Math.max(a.added||0,b.added||0),reviewed:Math.max(a.reviewed||0,b.reviewed||0)};
+    });
+    state.stats=Object.assign({},state.stats,{days:days});ops.push(['meta/stats',state.stats]);
+  }
+  if(o.settings){state.settings=Object.assign({},state.settings,o.settings);ops.push(['meta/settings',state.settings]);syncSettingsInputs();}
+  if(state.mode==='cloud'){
+    for(var i=0;i<ops.length;i+=400){
+      var b=fdb.batch();ops.slice(i,i+400).forEach(function(op){b.set(userDoc(op[0]),op[1]);});
+      b.commit().catch(onWriteError);
+    }
+  }else saveLocal();
+  render();
+  $('backup-msg').textContent='표현 '+n+'개를 불러왔습니다.'+(skip?' 건너뛴 '+skip+'개는 이미 더 많이 복습했거나 형식이 맞지 않는 항목입니다.':'');
+}
+
+/* ---------- ui helpers ---------- */
+var $=function(id){return document.getElementById(id);};
+function showBanner(t){var b=$('banner');b.textContent=t;b.hidden=false;}
+var toastT;
+function toast(t){var el=$('toast');el.textContent=t;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){el.hidden=true;},2200);}
+/* ---------- highlighting the expression inside example sentences ---------- */
+// Irregular verbs: base -> other forms (past, past participle, 3rd person)
+var IRREG=(function(){
+  var src='be:am,is,are,was,were,been,being,\'m,\'re,\'s|have:has,had,having,\'ve,\'d|do:does,did,done,doing|go:goes,went,gone|get:got,gotten|make:made|take:took,taken|come:came|give:gave,given|keep:kept|see:saw,seen|say:said,says|tell:told|think:thought|bring:brought|buy:bought|catch:caught|fall:fell,fallen|feel:felt|find:found|hold:held|know:knew,known|leave:left|lose:lost|meet:met|pay:paid|send:sent|speak:spoke,spoken|spend:spent|stand:stood|break:broke,broken|drive:drove,driven|eat:ate,eaten|sleep:slept|throw:threw,thrown|wear:wore,worn|win:won|write:wrote,written|sit:sat|stick:stuck|strike:struck|swear:swore,sworn|tear:tore,torn|bite:bit,bitten|blow:blew,blown|draw:drew,drawn|grow:grew,grown|hang:hung|hide:hid,hidden|lay:laid|lead:led|lend:lent|light:lit|ride:rode,ridden|rise:rose,risen|ring:rang,rung|shake:shook,shaken|show:shown|sing:sang,sung|sink:sank,sunk|steal:stole,stolen|swim:swam,swum|teach:taught|wake:woke,woken|fight:fought|fly:flew,flown,flies|forget:forgot,forgotten|freeze:froze,frozen|begin:began,begun|bear:bore,borne|bend:bent|bind:bound|build:built|burn:burnt|dig:dug|dream:dreamt|feed:fed|forgive:forgave,forgiven|mean:meant|seek:sought|sell:sold|shoot:shot|slide:slid|spin:spun|sweep:swept|wind:wound|run:ran|choose:chose,chosen|deal:dealt|keep:kept|lie:lay,lain,lying|die:dying|tie:tying|understand:understood|overcome:overcame|undergo:underwent,undergone|withdraw:withdrew,withdrawn|upset:upset|put:put|let:let|set:set|cut:cut|hit:hit|shut:shut|quit:quit|cost:cost|hurt:hurt|read:read|spread:spread|bet:bet';
+  var m={};src.split('|').forEach(function(p){var a=p.split(':');m[a[0]]=(m[a[0]]||[]).concat(a[1].split(','));});
+  return m;
+})();
+var STOPW={a:1,an:1,the:1,of:1,to:1,in:1,on:1,at:1,for:1,with:1,by:1,from:1,up:1,out:1,off:1,down:1,over:1,about:1,into:1,onto:1,and:1,or:1,as:1,it:1,not:1,no:1,than:1,so:1,too:1,all:1,around:1,away:1,back:1,through:1};
+var PLACEHOLDER={someone:1,somebody:1,something:1,sb:1,sth:1,'sb.':1,'sth.':1,'~':1,'...':1,'…':1};
+var OBJ='me|you|him|her|it|us|them|someone|somebody|everyone|anyone';
+var POSS='my|your|his|her|its|our|their';
+var REFL='myself|yourself|himself|herself|itself|ourselves|yourselves|themselves|oneself';
+function reEsc(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/'/g,"['’]");}
+function wordForms(w){
+  var f=[w],c='bcdfghjklmnpqrstvz';
+  var add=function(){for(var i=0;i<arguments.length;i++)f.push(arguments[i]);};
+  if(/(s|x|z|ch|sh|o)$/.test(w)) add(w+'es'); else add(w+'s');
+  if(/[^aeiou]y$/.test(w)){var st=w.slice(0,-1);add(st+'ies',st+'ied',w+'ing');}
+  else if(/ie$/.test(w)){add(w+'d',w.slice(0,-2)+'ying');}
+  else if(/ee$/.test(w)){add(w+'d',w+'ing');}
+  else if(/e$/.test(w)){add(w+'d',w.slice(0,-1)+'ing');}
+  else{
+    add(w+'ed',w+'ing');
+    // stop -> stopped, stopping (single vowel + single consonant)
+    var L=w.length;
+    if(L>=3&&c.indexOf(w[L-1])>=0&&'aeiou'.indexOf(w[L-2])>=0&&'aeiou'.indexOf(w[L-3])<0) add(w+w[L-1]+'ed',w+w[L-1]+'ing');
+  }
+  if(/c$/.test(w)) add(w+'ked',w+'king');
+  if(IRREG[w]){IRREG[w].forEach(function(x){f.push(x);});}
+  return f;
+}
+function wordPattern(w){
+  w=w.replace(/’/g,"'");
+  if(PLACEHOLDER[w]) return "[^\\s]+(?:\\s+[^\\s]+){0,2}?";
+  if(/^(one|someone|somebody|sb)'s$/.test(w)) return "(?:"+POSS+"|[A-Za-z]+['’]s)";
+  if(/^(oneself|yourself|myself|himself|herself|themselves|ourselves|yourselves|itself)$/.test(w)) return '(?:'+REFL+')';
+  if(new RegExp('^(?:'+OBJ+')$').test(w)&&w!=='it') return '(?:'+OBJ+')';
+  if(new RegExp('^(?:'+POSS+')$').test(w)&&w!=='her') return '(?:'+POSS+')';
+  if(STOPW[w]||!/^[a-z']+$/.test(w)) return reEsc(w);
+  var fs=wordForms(w).filter(function(x,i,a){return a.indexOf(x)===i;}).sort(function(a,b){return b.length-a.length;});
+  return '(?:'+fs.map(reEsc).join('|')+')';
+}
+function findRanges(text,words,gap){
+  if(!words.length) return null;
+  var sep=gap?"\\s+(?:[^\\s]+\\s+){0,3}?":"\\s+";
+  var re;
+  try{re=new RegExp("(?<![A-Za-z])(?:"+words.map(wordPattern).join(sep)+")(?![A-Za-z])",'gi');}catch(e){return null;}
+  var out=[],m;
+  while((m=re.exec(text))){if(!m[0].length){re.lastIndex++;continue;}out.push([m.index,m.index+m[0].length]);}
+  return out.length?out:null;
+}
+function highlight(ex,phrase){
+  var text=String(ex==null?'':ex);
+  if(!phrase) return esc(text);
+  var words=phrase.toLowerCase().replace(/[()\[\]"“”,.!?;:]/g,' ').replace(/\//g,' ').trim().split(/\s+/).filter(Boolean);
+  // "take care of someone": leave the placeholder at either end out of the mark
+  while(words.length>1&&PLACEHOLDER[words[0]]) words.shift();
+  while(words.length>1&&PLACEHOLDER[words[words.length-1]]) words.pop();
+  var r=findRanges(text,words,false)
+    ||(words.length>1&&findRanges(text,words,true))
+    ||(words.length>2&&findRanges(text,words.slice(0,-1),false))
+    ||(words.length>2&&findRanges(text,words.slice(1),false));
+  if(!r) return esc(text);
+  var h='',pos=0;
+  r.forEach(function(x){h+=esc(text.slice(pos,x[0]))+'<mark>'+esc(text.slice(x[0],x[1]))+'</mark>';pos=x[1];});
+  return h+esc(text.slice(pos));
+}
+function getExamples(c){
+  if(Array.isArray(c.examples)&&c.examples.length) return c.examples.map(function(x){return {en:x.en||'',ko:x.ko||''};});
+  if(c.example||c.exampleKo) return [{en:c.example||'',ko:c.exampleKo||''}];
+  return [];
+}
+function examplesHtml(c){
+  var xs=getExamples(c);if(!xs.length) return '';
+  return '<div class="exs">'+xs.map(function(x){
+    return '<div class="ex-item">'+(x.en?'<div class="ex">'+highlight(x.en,c.en)+'</div>':'')+(x.ko?'<div class="exko">'+esc(x.ko)+'</div>':'')+'</div>';
+  }).join('')+'</div>';
+}
+var canSpeak='speechSynthesis' in window && typeof SpeechSynthesisUtterance!=='undefined';
+function speak(text){try{window.speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=.92;window.speechSynthesis.speak(u);}catch(e){}}
+var SPEAK_SVG='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="none"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+
+function dueCards(t){return Array.from(state.cards.values()).filter(function(c){return c.due<=t;}).sort(function(a,b){return a.due<b.due?-1:a.due>b.due?1:(a.stage||0)-(b.stage||0);});}
+function streak(t){
+  var d=state.stats.days||{},n=0,cur=t;
+  var active=function(x){var v=d[x];return v&&((v.reviewed||0)+(v.added||0))>0;};
+  if(!active(cur)) cur=addDays(cur,-1);
+  while(active(cur)){n++;cur=addDays(cur,-1);}
+  return n;
+}
+
+/* ---------- tabs ---------- */
+var tab='today';
+document.querySelectorAll('[data-tab]').forEach(function(b){b.addEventListener('click',function(){setTab(b.dataset.tab);});});
+function setTab(t){
+  tab=t;
+  document.querySelectorAll('[data-tab]').forEach(function(b){b.setAttribute('aria-selected',String(b.dataset.tab===t));});
+  ['today','review','add','library'].forEach(function(v){$('view-'+v).hidden=(v!==t);});
+  if(t==='review'&&!session&&state.ready) startSession();
+  render();window.scrollTo(0,0);
+}
+
+/* ---------- static bits ---------- */
+function renderStatic(){
+  var l=$('ladder'),h='<span>당일 확인</span>';
+  INTERVALS.forEach(function(n){h+='<em>→</em><span>'+(n<30?n+'일':n/30+'개월')+'</span>';});
+  l.innerHTML=h;
+}
+function forecastSvg(t){
+  var counts=[];for(var i=0;i<14;i++)counts.push(0);
+  state.cards.forEach(function(c){var d=Math.max(0,diffDays(t,c.due));if(d<14)counts[d]++;});
+  var max=Math.max(4,Math.max.apply(null,counts));
+  var W=420,H=170,L=8,R=8,T=20,B=34,bw=(W-L-R)/14;
+  var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="앞으로 14일 동안 날짜별 복습 예정 개수">';
+  s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+(H-B)+'" y2="'+(H-B)+'" stroke="var(--line)"/>';
+  var wd=['일','월','화','수','목','금','토'];
+  counts.forEach(function(n,i){
+    var h=(H-T-B)*n/max, xx=L+i*bw+3, d=addDays(t,i).split('-').map(Number), dt=new Date(d[0],d[1]-1,d[2]);
+    s+='<rect x="'+xx+'" y="'+(H-B-h)+'" width="'+(bw-6)+'" height="'+Math.max(h,0)+'" rx="3" fill="'+(i===0?'var(--accent)':'var(--accent)')+'" fill-opacity="'+(i===0?1:.35)+'"/>';
+    if(n>0) s+='<text x="'+(xx+(bw-6)/2)+'" y="'+(H-B-h-5)+'" text-anchor="middle" font-size="11" fill="var(--ink)" font-family="IBM Plex Mono,monospace">'+n+'</text>';
+    s+='<text x="'+(xx+(bw-6)/2)+'" y="'+(H-B+14)+'" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="IBM Plex Mono,monospace">'+(i===0?'오늘':d[2])+'</text>';
+    s+='<text x="'+(xx+(bw-6)/2)+'" y="'+(H-B+27)+'" text-anchor="middle" font-size="9" fill="var(--faint)" font-family="IBM Plex Sans KR,sans-serif">'+wd[dt.getDay()]+'</text>';
+  });
+  return s+'</svg>';
+}
+
+/* ---------- render ---------- */
+function render(){
+  var gate=state.mode==='signedout'||state.mode==='connecting';
+  $('view-signin').hidden=state.mode!=='signedout';$('tabs').hidden=gate;
+  ['today','review','add','library'].forEach(function(v){$('view-'+v).hidden=gate||v!==tab;});
+  if(gate) return;
+  var t=today();
+  var due=state.ready?dueCards(t).length:0;
+  var b=$('due-badge');b.textContent=due;if(due>0)b.removeAttribute('data-zero');else b.setAttribute('data-zero','');
+  if(tab==='today') renderToday(t,due);
+  if(tab==='review') renderReview(t);
+  if(tab==='add') renderAdded(t);
+  if(tab==='library') renderLibrary(t);
+}
+function renderToday(t,due){
+  var d=new Date();
+  $('today-date').textContent=(d.getMonth()+1)+'월 '+d.getDate()+'일 '+['일','월','화','수','목','금','토'][d.getDay()]+'요일';
+  if(!state.ready) return;
+  var all=Array.from(state.cards.values());
+  var dd=(state.stats.days||{})[t]||{};
+  var added=all.filter(function(c){return c.createdDay===t;}).length;
+  var goal=Math.max(1,+state.settings.goal||5);
+  var reviewed=dd.reviewed||0;
+  var st=streak(t);
+  var long=all.filter(function(c){return (c.stage||0)>=5;}).length;
+  if(!all.length){$('today-title').textContent='첫 표현을 추가해 보세요';$('today-sub').textContent='오늘 배운 표현을 기록하면 잊어버리기 전에 다시 보여 드립니다.';}
+  else if(due>0){$('today-title').textContent='오늘 복습할 표현이 '+due+'개 있습니다';$('today-sub').textContent='지금 복습하면 기억이 더 오래 유지됩니다. 약 '+Math.max(1,Math.round(due*0.3))+'분이면 끝납니다.';}
+  else{$('today-title').textContent='오늘 복습을 모두 마쳤습니다';var nx=all.map(function(c){return c.due;}).sort()[0];$('today-sub').textContent=nx?'다음 복습은 '+dueLabel({due:nx},t).t+'입니다. 새 표현을 추가해 보세요.':'';}
+  var sb=$('start-btn');
+  if(due>0){sb.disabled=false;sb.textContent='복습 시작 ('+due+'개)';sb.onclick=function(){session=null;setTab('review');};}
+  else{sb.disabled=false;sb.textContent='새 표현 추가';sb.onclick=function(){setTab('add');};}
+  $('stats').innerHTML=
+    stat('오늘 복습할 표현',due+'<small>개</small>',reviewed?'오늘 '+reviewed+'번 복습함':'아직 복습 전')+
+    stat('오늘 새 표현',added+'<small> / '+goal+'</small>','<div class="meter"><i style="width:'+Math.min(100,added/goal*100)+'%"></i></div>')+
+    stat('연속 학습',st+'<small>일</small>',st?'매일 이어가고 있어요':'오늘부터 시작')+
+    stat('전체 표현',all.length+'<small>개</small>','장기 기억 '+long+'개');
+  $('forecast').innerHTML=forecastSvg(t);
+  var wk=0;state.cards.forEach(function(c){var x=diffDays(t,c.due);if(x>=1&&x<=7)wk++;});
+  $('forecast-total').textContent='다음 7일 동안 '+wk+'개';
+}
+function stat(k,v,d){return '<div class="stat"><span class="k">'+k+'</span><span class="v">'+v+'</span><span class="d">'+d+'</span></div>';}
+
+/* ---------- review session ---------- */
+var session=null;
+function startSession(){
+  var t=today();
+  var ids=dueCards(t).map(function(c){return c.id;});
+  var dir=state.settings.dir||'ko';
+  session={queue:ids,total:ids.length,done:0,flipped:false,log:{again:0,hard:0,good:0,easy:0},dirs:{},day:t};
+  ids.forEach(function(id){session.dirs[id]=dir==='mix'?(Math.random()<.5?'en':'ko'):dir;});
+}
+function renderReview(t){
+  var v=$('view-review');
+  if(!state.ready){v.innerHTML='<div class="empty"><div class="hint">표현을 불러오는 중입니다.</div></div>';return;}
+  if(!session||session.day!==t||(session.total===0&&dueCards(t).length)) startSession();
+  // drop cards deleted elsewhere
+  session.queue=session.queue.filter(function(id){return state.cards.has(id);});
+  if(!session.queue.length){
+    if(session.total===0){
+      var all=Array.from(state.cards.values());
+      var nx=all.map(function(c){return c.due;}).sort()[0];
+      v.innerHTML='<div class="panel empty"><div class="big">오늘은 복습할 표현이 없습니다</div><p class="hint" style="margin:0">'+(nx?'다음 복습은 '+dueLabel({due:nx},t).t+'입니다. 복습은 정해진 날에 해야 효과가 큽니다.':'표현을 추가하면 여기에서 복습할 수 있습니다.')+'</p><button class="btn primary" id="go-add">새 표현 추가</button></div>';
+      $('go-add').onclick=function(){setTab('add');};
+    }else{
+      var L=session.log;
+      v.innerHTML='<div class="panel empty"><div class="eyebrow">복습 완료</div><div class="big">'+session.total+'개 표현을 모두 복습했습니다</div>'+
+        '<div class="summary"><span class="pill short">다시 '+L.again+'</span><span class="pill mid">어려움 '+L.hard+'</span><span class="pill long">알맞음 '+L.good+'</span><span class="pill new">쉬움 '+L.easy+'</span></div>'+
+        '<p class="hint" style="margin:0">각 표현은 기억 정도에 맞춰 다음 복습 날짜가 정해졌습니다.</p><div class="form-actions"><button class="btn" id="go-today">오늘 화면으로</button><button class="btn primary" id="go-add">새 표현 추가</button></div></div>';
+      $('go-today').onclick=function(){setTab('today');};$('go-add').onclick=function(){setTab('add');};
+    }
+    return;
+  }
+  var c=state.cards.get(session.queue[0]);
+  var dir=session.dirs[c.id]||'ko';
+  var si=stageInfo(c.stage);
+  var pct=session.total?Math.round(session.done/session.total*100):0;
+  var front=dir==='en'
+    ?'<div class="front"><div class="en">'+esc(c.en)+'</div>'+(canSpeak?'<button class="speak" data-say="'+esc(c.en)+'" aria-label="발음 듣기">'+SPEAK_SVG+'</button>':'')+'</div><div class="front-hint">이 표현의 뜻을 떠올려 보세요.</div>'
+    :'<div class="front"><div class="ko">'+esc(c.ko)+'</div></div><div class="front-hint">'+getExamples(c).filter(function(x){return x.ko;}).map(function(x){return '“'+esc(x.ko)+'”<br>';}).join('')+'영어 표현을 떠올려 보세요.</div>';
+  var back='';
+  if(session.flipped){
+    back='<div class="back">'+(dir==='en'
+      ?'<div class="ans-ko">'+esc(c.ko)+'</div>'
+      :'<div class="front"><div class="ans-en">'+esc(c.en)+'</div>'+(canSpeak?'<button class="speak" data-say="'+esc(c.en)+'" aria-label="발음 듣기">'+SPEAK_SVG+'</button>':'')+'</div><div class="hint" style="margin-top:-8px">'+esc(c.ko)+'</div>')+
+      examplesHtml(c)+
+      (c.note?'<div class="memo">'+esc(c.note)+'</div>':'')+'</div>';
+  }
+  var actions=session.flipped
+    ?'<div class="actions">'+['again','hard','good','easy'].map(function(g,i){var n=schedule(c,g).interval;return '<button class="grade '+g+'" data-g="'+g+'">'+{again:'다시',hard:'어려움',good:'알맞음',easy:'쉬움'}[g]+'<small>'+ivLabel(n)+'</small><kbd>'+(i+1)+'</kbd></button>';}).join('')+'</div>'
+    :'<button class="btn primary lg reveal" id="reveal">정답 보기 <span class="mono" style="font-size:12px;opacity:.7">Space</span></button>';
+  v.innerHTML='<div class="rv-top"><span class="hint num">'+session.done+' / '+session.total+' 완료</span><div class="progress"><i style="width:'+pct+'%"></i></div><span class="hint num">남은 카드 '+session.queue.length+'</span></div>'+
+    '<article class="flash"><div class="flash-meta"><span class="pill '+si.k+'">'+si.t+'</span><span class="mono">'+(c.reps?'복습 '+c.reps+'회':'첫 복습')+(c.lapses?' · 잊음 '+c.lapses+'회':'')+'</span></div>'+front+back+'</article>'+actions;
+  var rv=$('reveal');if(rv)rv.onclick=flip;
+  v.querySelectorAll('[data-g]').forEach(function(b){b.onclick=function(){grade(b.dataset.g);};});
+  v.querySelectorAll('[data-say]').forEach(function(b){b.onclick=function(){speak(b.dataset.say);};});
+}
+function flip(){if(session){session.flipped=true;render();}}
+function grade(g){
+  if(!session||!session.flipped||!session.queue.length) return;
+  var id=session.queue.shift();var c=state.cards.get(id);if(!c) return;
+  var t=today();var r=schedule(c,g);
+  var hist=(c.history||[]).concat([{d:t,g:g}]).slice(-30);
+  var nc=Object.assign({},c,{stage:r.stage,due:addDays(t,r.interval),lastReviewed:t,reps:(c.reps||0)+1,lapses:(c.lapses||0)+(g==='again'?1:0),history:hist});
+  session.log[g]++;
+  if(g==='again'){session.queue.splice(Math.min(3,session.queue.length),0,id);}
+  else session.done++;
+  session.flipped=false;
+  bumpStat('reviewed',1);
+  putCard(nc);
+}
+document.addEventListener('keydown',function(e){
+  if(tab!=='review'||!session) return;
+  if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement&&document.activeElement.tagName)) return;
+  if(!session.flipped&&(e.code==='Space'||e.key==='Enter')){e.preventDefault();flip();return;}
+  if(session.flipped){var m={'1':'again','2':'hard','3':'good','4':'easy'}[e.key];if(m){e.preventDefault();grade(m);}}
+});
+
+/* ---------- add / edit ---------- */
+var editingId=null;
+function newCard(f){
+  var t=today();
+  return {id:uid(),en:f.en,ko:f.ko,examples:f.examples||[],note:f.note||'',tags:f.tags||[],createdAt:new Date().toISOString(),createdDay:t,stage:0,due:t,lastReviewed:null,reps:0,lapses:0,history:[]};
+}
+var exSeq=0;
+function exRowHtml(x){
+  var k=exSeq++;
+  return '<div class="ex-row"><span class="ex-n num"></span><div class="row2">'+
+    '<textarea id="f-ex-'+k+'" class="f-ex" placeholder="He told a joke to break the ice.">'+esc(x.en||'')+'</textarea>'+
+    '<textarea id="f-exko-'+k+'" class="f-exko" placeholder="그는 분위기를 풀려고 농담을 했다.">'+esc(x.ko||'')+'</textarea></div>'+
+    '<button class="btn ghost ex-del" type="button">×</button></div>';
+}
+function renumberEx(){
+  var rows=$('ex-list').querySelectorAll('.ex-row');
+  rows.forEach(function(r,i){
+    r.querySelector('.ex-n').textContent=i+1;
+    r.querySelector('.f-ex').setAttribute('aria-label','예문 '+(i+1));
+    r.querySelector('.f-exko').setAttribute('aria-label','예문 '+(i+1)+' 해석');
+    var d=r.querySelector('.ex-del');d.setAttribute('aria-label','예문 '+(i+1)+' 지우기');d.hidden=rows.length===1&&!r.querySelector('.f-ex').value&&!r.querySelector('.f-exko').value;
+  });
+}
+function setExRows(list){
+  if(!list||!list.length) list=[{}];
+  $('ex-list').innerHTML=list.map(exRowHtml).join('');renumberEx();
+}
+function readExamples(){
+  return Array.from($('ex-list').querySelectorAll('.ex-row')).map(function(r){return {en:r.querySelector('.f-ex').value.trim(),ko:r.querySelector('.f-exko').value.trim()};}).filter(function(x){return x.en||x.ko;}).slice(0,20);
+}
+$('ex-add').onclick=function(){
+  $('ex-list').insertAdjacentHTML('beforeend',exRowHtml({}));renumberEx();
+  var all=$('ex-list').querySelectorAll('.f-ex');all[all.length-1].focus();
+};
+$('ex-list').addEventListener('click',function(e){
+  var b=e.target.closest('.ex-del');if(!b) return;
+  var rows=$('ex-list').querySelectorAll('.ex-row');
+  if(rows.length===1){rows[0].querySelector('.f-ex').value='';rows[0].querySelector('.f-exko').value='';}
+  else b.closest('.ex-row').remove();
+  renumberEx();
+});
+$('ex-list').addEventListener('input',renumberEx);
+setExRows([]);
+function parseTags(s){return String(s||'').split(',').map(function(x){return x.trim();}).filter(Boolean).slice(0,8);}
+$('add-form').addEventListener('submit',function(e){
+  e.preventDefault();
+  if(!state.ready) return;
+  var f={en:$('f-en').value.trim(),ko:$('f-ko').value.trim(),examples:readExamples(),note:$('f-note').value.trim(),tags:parseTags($('f-tags').value)};
+  if(!f.en||!f.ko){$('f-msg').textContent='영어 표현과 뜻을 모두 입력해 주세요.';return;}
+  if(editingId&&state.cards.has(editingId)){
+    var ec=Object.assign({},state.cards.get(editingId),f);delete ec.example;delete ec.exampleKo;
+    putCard(ec);toast('수정했습니다');endEdit();setTab('library');return;
+  }
+  var dup=Array.from(state.cards.values()).find(function(c){return c.en.toLowerCase()===f.en.toLowerCase();});
+  putCard(newCard(f));bumpStat('added',1);
+  this.reset();setExRows([]);$('f-en').focus();
+  $('f-msg').textContent=dup?'같은 표현이 이미 목록에 있어 하나 더 추가했습니다.':'';
+  toast('저장했습니다. 오늘 복습 목록에 추가됐어요.');
+});
+function startEdit(id){
+  var c=state.cards.get(id);if(!c) return;
+  editingId=id;
+  $('f-en').value=c.en;$('f-ko').value=c.ko;setExRows(getExamples(c));$('f-note').value=c.note||'';$('f-tags').value=(c.tags||[]).join(', ');
+  $('add-eyebrow').textContent='표현 수정';$('add-title').textContent=c.en;$('f-submit').textContent='수정 저장';$('f-cancel').hidden=false;$('f-msg').textContent='복습 일정은 그대로 유지됩니다.';
+  setTab('add');
+}
+function endEdit(){editingId=null;$('add-form').reset();setExRows([]);$('add-eyebrow').textContent='새 표현';$('add-title').textContent='오늘 배운 표현 기록하기';$('f-submit').textContent='표현 저장';$('f-cancel').hidden=true;$('f-msg').textContent='';}
+$('f-cancel').onclick=function(){endEdit();setTab('library');};
+$('bulk-add').onclick=function(){
+  if(!state.ready) return;
+  var lines=$('bulk-text').value.split(/\n/).map(function(l){return l.trim();}).filter(Boolean);
+  var n=0,bad=0;
+  lines.forEach(function(l){var p=l.split('|').map(function(x){return x.trim();});if(p[0]&&p[1]){var ex=[];for(var i=2;i<p.length;i+=2){if(p[i]||p[i+1])ex.push({en:p[i]||'',ko:p[i+1]||''});}putCard(newCard({en:p[0],ko:p[1],examples:ex}));n++;}else bad++;});
+  if(n) bumpStat('added',n);
+  $('bulk-msg').textContent=n?n+'개를 추가했습니다.'+(bad?' 형식이 맞지 않는 '+bad+'줄은 건너뛰었습니다.':''):'추가할 줄이 없습니다. “표현 | 뜻” 형식인지 확인해 주세요.';
+  if(n) $('bulk-text').value='';
+};
+function renderAdded(t){
+  var list=Array.from(state.cards.values()).filter(function(c){return c.createdDay===t;}).sort(function(a,b){return a.createdAt<b.createdAt?1:-1;});
+  var goal=Math.max(1,+state.settings.goal||5);
+  $('added-count').textContent=list.length+' / 목표 '+goal+'개';
+  $('added-list').innerHTML=list.length?list.map(function(c){return '<li><span class="en">'+esc(c.en)+'</span><span class="hint">'+esc(c.ko)+'</span></li>';}).join(''):'<li class="hint">아직 오늘 추가한 표현이 없습니다.</li>';
+}
+
+/* ---------- library ---------- */
+var libFilter='all',openId=null,confirmId=null;
+var FILTERS=[['all','전체'],['due','오늘 복습'],['new','새 표현'],['short','단기 기억'],['mid','정착 중'],['long','장기 기억']];
+$('lib-q').addEventListener('input',function(){renderLibrary(today());});
+function renderLibrary(t){
+  var all=Array.from(state.cards.values());
+  $('lib-title').textContent='표현 '+all.length+'개';
+  $('lib-chips').innerHTML=FILTERS.map(function(f){
+    var n=all.filter(function(c){return matchFilter(c,f[0],t);}).length;
+    return '<button class="chip" data-f="'+f[0]+'" aria-pressed="'+(libFilter===f[0])+'">'+f[1]+' <span class="num">'+n+'</span></button>';
+  }).join('');
+  $('lib-chips').querySelectorAll('[data-f]').forEach(function(b){b.onclick=function(){libFilter=b.dataset.f;renderLibrary(t);};});
+  var hasEx=all.some(function(c){return (c.tags||[]).indexOf('예시')>=0;});
+  var ce=$('clear-examples');ce.hidden=!hasEx;
+  ce.textContent=confirmId==='__examples'?'정말 삭제할까요? 한 번 더 누르세요':'예시 표현 모두 삭제';
+  ce.onclick=function(){
+    if(confirmId!=='__examples'){confirmId='__examples';renderLibrary(t);return;}
+    confirmId=null;all.filter(function(c){return (c.tags||[]).indexOf('예시')>=0;}).forEach(function(c){removeCard(c.id);});toast('예시 표현을 삭제했습니다');
+  };
+  var q=$('lib-q').value.trim().toLowerCase();
+  var list=all.filter(function(c){
+    if(!matchFilter(c,libFilter,t)) return false;
+    if(!q) return true;
+    return (c.en+' '+c.ko+' '+getExamples(c).map(function(x){return x.en+' '+x.ko;}).join(' ')+' '+(c.tags||[]).join(' ')).toLowerCase().indexOf(q)>=0;
+  }).sort(function(a,b){return a.due<b.due?-1:a.due>b.due?1:(a.createdAt<b.createdAt?1:-1);});
+  var box=$('lib-list');
+  if(!state.ready){box.innerHTML='<p class="hint">불러오는 중입니다.</p>';return;}
+  if(!list.length){box.innerHTML='<div class="panel empty"><div class="hint">'+(all.length?'조건에 맞는 표현이 없습니다.':'아직 저장한 표현이 없습니다.')+'</div></div>';return;}
+  box.innerHTML='<div class="lib">'+list.map(function(c){
+    var si=stageInfo(c.stage),dl=dueLabel(c,t),open=openId===c.id;
+    var h='<div class="item"><button class="item-row" data-open="'+c.id+'" aria-expanded="'+open+'"><div><div class="en">'+esc(c.en)+'</div><div class="ko">'+esc(c.ko)+'</div></div><div class="right"><span class="pill '+si.k+'">'+si.t+'</span><span class="due'+(dl.now?' now':'')+'">'+dl.t+'</span></div></button>';
+    if(open){
+      h+='<div class="item-detail">'+examplesHtml(c)+(c.note?'<div class="memo">'+esc(c.note)+'</div>':'')+
+        ((c.tags||[]).length?'<div class="chips">'+c.tags.map(function(x){return '<span class="tag">'+esc(x)+'</span>';}).join('')+'</div>':'')+
+        '<div class="facts"><span>추가 '+esc(c.createdDay)+'</span><span>복습 '+(c.reps||0)+'회</span><span>잊음 '+(c.lapses||0)+'회</span><span>다음 복습 '+esc(c.due)+'</span></div>'+
+        '<div class="form-actions">'+(canSpeak?'<button class="btn ghost" data-say="'+esc(c.en)+'">'+SPEAK_SVG+' 발음</button>':'')+'<button class="btn" data-edit="'+c.id+'">수정</button>'+
+        (confirmId===c.id?'<span class="confirm">이 표현과 복습 기록을 삭제할까요? <button class="btn danger" data-del="'+c.id+'">삭제</button><button class="btn ghost" data-keep>취소</button></span>':'<button class="btn ghost danger" data-ask="'+c.id+'">삭제</button>')+
+        '<button class="btn ghost" data-reset="'+c.id+'">처음부터 다시 외우기</button></div></div>';
+    }
+    return h+'</div>';
+  }).join('')+'</div>';
+  box.querySelectorAll('[data-open]').forEach(function(b){b.onclick=function(){openId=openId===b.dataset.open?null:b.dataset.open;confirmId=null;renderLibrary(t);};});
+  box.querySelectorAll('[data-edit]').forEach(function(b){b.onclick=function(){startEdit(b.dataset.edit);};});
+  box.querySelectorAll('[data-ask]').forEach(function(b){b.onclick=function(){confirmId=b.dataset.ask;renderLibrary(t);};});
+  box.querySelectorAll('[data-keep]').forEach(function(b){b.onclick=function(){confirmId=null;renderLibrary(t);};});
+  box.querySelectorAll('[data-del]').forEach(function(b){b.onclick=function(){confirmId=null;openId=null;removeCard(b.dataset.del);toast('삭제했습니다');};});
+  box.querySelectorAll('[data-reset]').forEach(function(b){b.onclick=function(){var c=state.cards.get(b.dataset.reset);if(c){putCard(Object.assign({},c,{stage:0,due:today()}));toast('오늘 복습 목록에 다시 넣었습니다');}};});
+  box.querySelectorAll('[data-say]').forEach(function(b){b.onclick=function(){speak(b.dataset.say);};});
+}
+function matchFilter(c,f,t){
+  if(f==='all') return true;
+  if(f==='due') return c.due<=t;
+  return stageInfo(c.stage).k===f;
+}
+
+/* ---------- settings ---------- */
+function renderAccount(){
+  var who=$('acct-who'),so=$('sign-out');
+  if(state.mode==='cloud'&&user){who.textContent=(user.email||user.displayName||'Google 계정')+' 계정으로 Firebase에 저장 중';so.hidden=false;}
+  else{who.textContent='이 브라우저에만 저장 중입니다. 다른 기기에서 보려면 Firebase 설정이 필요합니다.';so.hidden=true;}
+}
+$('sign-in').onclick=signIn;
+$('sign-out').onclick=function(){firebase.auth().signOut();};
+$('export-btn').onclick=exportData;
+$('import-file').addEventListener('change',function(){
+  var inp=this,f=inp.files&&inp.files[0];if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){
+    inp.value='';
+    var o;try{o=JSON.parse(r.result);}catch(e){$('backup-msg').textContent='JSON 파일을 읽지 못했습니다. 백업 파일이 맞는지 확인해 주세요.';return;}
+    if(!o||!Array.isArray(o.cards)){$('backup-msg').textContent='표현 복습 노트의 백업 파일이 아닙니다.';return;}
+    if(!state.ready){$('backup-msg').textContent='기록을 불러온 뒤에 다시 시도해 주세요.';return;}
+    importData(o);
+  };
+  r.readAsText(f);
+});
+function syncSettingsInputs(){$('s-goal').value=state.settings.goal||5;$('s-dir').value=state.settings.dir||'ko';}
+var goalT;
+$('s-goal').addEventListener('input',function(){
+  var n=Math.min(50,Math.max(1,parseInt(this.value,10)||5));
+  clearTimeout(goalT);goalT=setTimeout(function(){state.settings=Object.assign({},state.settings,{goal:n});putMeta('settings');render();},500);
+});
+$('s-dir').addEventListener('change',function(){state.settings=Object.assign({},state.settings,{dir:this.value});putMeta('settings');session=null;toast('다음 복습부터 적용됩니다');});
+
+setInterval(function(){if(session&&session.day!==today()){session=null;}render();},60000);
+boot();
+})();
+</script>
+</body>
+</html>
