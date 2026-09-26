@@ -1,6 +1,6 @@
 // Offline support: the app shell is cached so the app opens without a connection.
 // Firestore keeps its own offline copy of the records, so data requests are not touched here.
-const VERSION = 'v3';
+const VERSION = 'v4';
 const SHELL = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 const SHELL_FILES = [
@@ -37,7 +37,8 @@ self.addEventListener('fetch', event => {
   if (url.origin === self.location.origin) {
     event.respondWith((async () => {
       try {
-        const res = await fetch(req);
+        // no-cache: always revalidate with the server instead of trusting the HTTP cache
+        const res = await fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' });
         if (res.ok) (await caches.open(SHELL)).put(req, res.clone());
         return res;
       } catch (e) {
