@@ -8,7 +8,7 @@
 1. https://console.firebase.google.com 에서 **프로젝트 추가** (Google Analytics는 꺼도 됩니다).
 2. **Authentication** > 시작하기 > 로그인 방법 > **Google** 사용 설정.
 3. **Authentication** > 설정 > **승인된 도메인**에 `haeri-kim1108.github.io` 추가.
-4. **Firestore Database** > 데이터베이스 만들기 > 위치 `asia-northeast3 (서울)` > **프로덕션 모드**.
+4. **Firestore Database** (Realtime Database 아님) > 데이터베이스 만들기 > 위치 `nam5 (미국 멀티 리전)` > **프로덕션 모드**.
 5. Firestore > **규칙** 탭에 `firestore.rules` 내용을 붙여 넣고 게시.
 6. 프로젝트 설정(톱니바퀴) > 내 앱 > **웹 앱 추가(</>)** > 표시되는 `firebaseConfig` 값을 `firebase-config.js`에 붙여 넣기.
 
