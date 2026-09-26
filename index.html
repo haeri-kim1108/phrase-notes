@@ -8,7 +8,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="표현 복습">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='6' y='12' width='44' height='34' rx='6' fill='%23BFCBF5'/%3E%3Crect x='14' y='18' width='44' height='34' rx='6' fill='%232747C9'/%3E%3Cpath d='M24 36h24M24 28h16' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <title>표현 복습 노트</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -218,6 +221,8 @@ details[open] summary{margin-bottom:10px}
 .gate{max-width:460px;margin:8vh auto 0;text-align:center;display:grid;gap:14px;justify-items:center}
 .gate .big{font-family:var(--serif);font-size:30px;font-weight:500;line-height:1.25}
 .gate .btn{padding:12px 20px;font-size:15px}
+.install{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.install b{font-weight:600}
 .acct{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:10px;font-size:14px;z-index:50;box-shadow:var(--shadow)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -300,6 +305,10 @@ details[open] summary{margin-bottom:10px}
           <span class="hint" id="backup-msg"></span>
         </div>
         <p class="hint" style="margin:10px 0 0">백업 파일(JSON)에는 모든 표현과 복습 기록이 들어 있습니다. 가끔 내려받아 두면 어떤 서비스를 쓰든 기록을 옮길 수 있습니다.</p>
+        <div class="install" id="install-box" hidden>
+          <div><b>앱으로 설치하기</b><p class="hint" id="install-text" style="margin:2px 0 0"></p></div>
+          <button class="btn primary" type="button" id="install-btn" hidden>앱 설치</button>
+        </div>
       </div>
     </section>
 
@@ -965,6 +974,30 @@ $('s-goal').addEventListener('input',function(){
 $('s-dir').addEventListener('change',function(){state.settings=Object.assign({},state.settings,{dir:this.value});putMeta('settings');session=null;toast('다음 복습부터 적용됩니다');});
 
 setInterval(function(){if(session&&session.day!==today()){session=null;}render();},60000);
+/* ---------- install as an app ---------- */
+var installEvt=null;
+function isStandalone(){return window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;}
+function renderInstall(){
+  var box=$('install-box'),btn=$('install-btn'),txt=$('install-text');
+  if(isStandalone()){box.hidden=true;return;}
+  var ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua)||(ua.indexOf('Mac')>=0&&'ontouchend' in document);
+  box.hidden=false;
+  if(installEvt){btn.hidden=false;txt.textContent='홈 화면과 앱 목록에 추가되고, 주소창 없이 전체 화면으로 열립니다.';}
+  else if(ios){btn.hidden=true;txt.textContent='Safari 아래쪽의 공유 버튼을 누른 뒤 “홈 화면에 추가”를 선택하세요.';}
+  else{btn.hidden=true;txt.textContent='Chrome이나 Edge 주소창 오른쪽의 설치 아이콘, 또는 메뉴의 “앱 설치”/“홈 화면에 추가”를 누르세요.';}
+}
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();installEvt=e;renderInstall();});
+window.addEventListener('appinstalled',function(){installEvt=null;renderInstall();toast('앱을 설치했습니다');});
+$('install-btn').onclick=function(){
+  if(!installEvt) return;
+  installEvt.prompt();
+  installEvt.userChoice.then(function(){installEvt=null;renderInstall();});
+};
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
+renderInstall();
+
+// App shortcuts open #review or #add
+(function(){var h=location.hash.slice(1);if(h==='review'||h==='add'||h==='library'){tab=h;history.replaceState(null,'',location.pathname);}})();
 boot();
 })();
 </script>

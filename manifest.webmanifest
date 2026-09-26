@@ -1,0 +1,22 @@
+{
+  "name": "표현 복습 노트",
+  "short_name": "표현 복습",
+  "description": "매일 배운 영어 표현을 기록하고 망각 곡선에 맞춰 복습하는 앱",
+  "lang": "ko",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F1F4F7",
+  "theme_color": "#F1F4F7",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "복습 시작", "url": "./#review", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "표현 추가", "url": "./#add", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
