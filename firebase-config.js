@@ -8,5 +8,4 @@ window.FIREBASE_CONFIG = {
   appId: "1:46311718964:web:414375fdfb7a958c558a61"
 };
 
-// 복습 알림용 웹 푸시 공개 키 (Firebase 콘솔 > 프로젝트 설정 > 클라우드 메시징 > 웹 푸시 인증서)
-window.FIREBASE_VAPID_KEY = "";
+window.FIREBASE_VAPID_KEY = "BMUOl081vWEV4B9p2kk2cBlR2ORkehUHVjQ_fDB51TBp8UvaJ9uHP9YfjpSHYCZyx_aMV0r5uicbP2XTrmoGeGk";
