@@ -1,0 +1,26 @@
+name: Review reminders
+
+on:
+  schedule:
+    - cron: '2 * * * *'   # every hour; send.js decides who is due this hour
+  workflow_dispatch:
+    inputs:
+      test:
+        description: '지금 모든 기기에 테스트 알림 보내기'
+        type: boolean
+        default: true
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+        working-directory: reminders
+      - run: node reminders/send.js ${{ github.event_name == 'workflow_dispatch' && inputs.test && '--test' || '' }}
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

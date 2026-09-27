@@ -1,0 +1,8 @@
+{
+  "name": "phrase-notes-reminders",
+  "private": true,
+  "description": "Sends daily review reminders for 표현 복습 노트",
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}

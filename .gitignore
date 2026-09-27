@@ -1,2 +1,3 @@
 # 개인 기록 백업 파일은 올리지 않습니다
 phrase-notes-backup-*.json
+node_modules/

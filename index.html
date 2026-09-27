@@ -298,6 +298,22 @@ details[open] summary{margin-bottom:10px}
       </div>
 
       <div class="panel">
+        <div class="section-head"><h2>복습 알림</h2><span class="hint" id="n-state"></span></div>
+        <div class="settings">
+          <div class="field">
+            <label for="n-hour">알림 받을 시간</label>
+            <select id="n-hour"></select>
+          </div>
+        </div>
+        <div class="form-actions" style="margin-top:12px">
+          <button class="btn primary" type="button" id="n-on">이 기기에서 알림 켜기</button>
+          <button class="btn" type="button" id="n-test" hidden>테스트 알림 보기</button>
+          <button class="btn ghost" type="button" id="n-off" hidden>이 기기 알림 끄기</button>
+        </div>
+        <p class="hint" id="n-msg" style="margin:10px 0 0">매일 정한 시간에 오늘 복습할 표현 개수를 알려 드립니다. 복습할 표현이 없으면 새 표현 목표를 알려 드립니다.</p>
+      </div>
+
+      <div class="panel">
         <div class="section-head"><h2>계정과 백업</h2></div>
         <div class="acct"><span class="hint" id="acct-who"></span><button class="btn ghost" id="sign-out" hidden>로그아웃</button></div>
         <div class="form-actions">
@@ -399,6 +415,7 @@ details[open] summary{margin-bottom:10px}
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script>
 (function(){
@@ -475,7 +492,7 @@ function configured(){
   var c=window.FIREBASE_CONFIG;
   return !!(window.firebase&&c&&c.apiKey&&c.projectId&&!/^YOUR_/.test(c.apiKey));
 }
-function resetState(){state.cards=new Map();state.stats={days:{}};state.settings={goal:5,dir:'ko'};state.ready=false;session=null;}
+function resetState(){notify=notifyDefaults();tokenChecked=false;state.cards=new Map();state.stats={days:{}};state.settings={goal:5,dir:'ko'};state.ready=false;session=null;}
 function boot(){
   renderStatic();
   if(!configured()){
@@ -507,6 +524,7 @@ function connectCloud(){
   },fail));
   unsubs.push(userDoc('meta/stats').onSnapshot(function(s){if(s.exists){state.stats=Object.assign({days:{}},s.data());render();}},fail));
   unsubs.push(userDoc('meta/settings').onSnapshot(function(s){if(s.exists){state.settings=Object.assign({goal:5,dir:'ko'},s.data());syncSettingsInputs();render();}},fail));
+  unsubs.push(userDoc('meta/notify').onSnapshot(function(s){notify=Object.assign(notifyDefaults(),s.exists?s.data():{});renderNotify();refreshNotifyToken();},fail));
 }
 function signIn(){
   var p=new firebase.auth.GoogleAuthProvider();
@@ -998,8 +1016,88 @@ $('install-btn').onclick=function(){
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
 renderInstall();
 
-// App shortcuts open #review or #add
-(function(){var h=location.hash.slice(1);if(h==='review'||h==='add'||h==='library'){tab=h;history.replaceState(null,'',location.pathname);}})();
+/* ---------- daily review reminders ---------- */
+// The page saves this device's push token in users/{uid}/meta/notify;
+// a scheduled GitHub Action (reminders/send.js) sends the notification at the chosen hour.
+var notify=notifyDefaults(),tokenChecked=false;
+function notifyDefaults(){return {enabled:false,hour:21,tz:'',devices:{}};}
+function isIOS(){var ua=navigator.userAgent;return /iPhone|iPad|iPod/.test(ua)||(ua.indexOf('Mac')>=0&&'ontouchend' in document);}
+function deviceId(){
+  var id=null;try{id=localStorage.getItem('phrase-notes-device');}catch(e){}
+  if(!id){id='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);try{localStorage.setItem('phrase-notes-device',id);}catch(e){}}
+  return id;
+}
+function pushSupported(){
+  return 'Notification' in window&&'serviceWorker' in navigator&&'PushManager' in window&&!!(window.firebase&&firebase.messaging);
+}
+function hourLabel(h){return (h<12?'오전 ':'오후 ')+((h%12)||12)+'시';}
+(function(){var s=$('n-hour'),h='';for(var i=0;i<24;i++)h+='<option value="'+i+'">'+hourLabel(i)+'</option>';s.innerHTML=h;s.value='21';})();
+function nMsg(t){$('n-msg').textContent=t;}
+function renderNotify(){
+  var mine=!!(notify.devices&&notify.devices[deviceId()]);
+  var on=notify.enabled&&mine&&'Notification' in window&&Notification.permission==='granted';
+  $('n-hour').value=String(notify.hour==null?21:notify.hour);
+  $('n-on').hidden=on;$('n-test').hidden=!on;$('n-off').hidden=!on;
+  var n=Object.keys(notify.devices||{}).length;
+  $('n-state').textContent=on?'이 기기 켜짐'+(n>1?' · 기기 '+n+'대':''):(n?'다른 기기 '+n+'대에서 켜짐':'꺼짐');
+}
+async function swReg(){await navigator.serviceWorker.register('sw.js');return navigator.serviceWorker.ready;}
+async function getPushToken(){
+  var reg=await swReg();
+  return firebase.messaging().getToken({vapidKey:window.FIREBASE_VAPID_KEY,serviceWorkerRegistration:reg});
+}
+function saveNotify(next){notify=next;renderNotify();return userDoc('meta/notify').set(notify).catch(onWriteError);}
+$('n-on').onclick=async function(){
+  if(state.mode!=='cloud'){nMsg('Google 계정으로 로그인한 뒤 알림을 켤 수 있습니다.');return;}
+  if(!window.FIREBASE_VAPID_KEY){nMsg('알림 설정이 아직 끝나지 않았습니다. firebase-config.js에 FIREBASE_VAPID_KEY를 넣어 주세요.');return;}
+  if(!pushSupported()){nMsg(isIOS()&&!isStandalone()?'iPhone에서는 홈 화면에 추가한 앱에서만 알림을 받을 수 있습니다. 먼저 홈 화면에 추가한 뒤 그 앱에서 알림을 켜 주세요.':'이 브라우저는 알림을 지원하지 않습니다.');return;}
+  var perm=await Notification.requestPermission();
+  if(perm!=='granted'){nMsg('알림이 차단되어 있습니다. 휴대폰 또는 브라우저 설정에서 이 앱의 알림을 허용한 뒤 다시 눌러 주세요.');renderNotify();return;}
+  nMsg('알림을 준비하는 중입니다…');
+  try{
+    var token=await getPushToken();
+    var devices=Object.assign({},notify.devices);
+    devices[deviceId()]={token:token,ua:navigator.userAgent.slice(0,160),updatedAt:new Date().toISOString()};
+    await saveNotify(Object.assign({},notify,{enabled:true,hour:+$('n-hour').value,tz:Intl.DateTimeFormat().resolvedOptions().timeZone,devices:devices}));
+    nMsg('매일 '+hourLabel(notify.hour)+'에 알림을 보내 드립니다. 서버 일정에 따라 몇 분 늦게 도착할 수 있습니다.');
+  }catch(e){nMsg('알림을 켜지 못했습니다. ('+(e&&(e.code||e.message)||'unknown')+')');}
+};
+$('n-off').onclick=async function(){
+  var devices=Object.assign({},notify.devices);delete devices[deviceId()];
+  try{await firebase.messaging().deleteToken();}catch(e){}
+  await saveNotify(Object.assign({},notify,{devices:devices,enabled:Object.keys(devices).length>0}));
+  nMsg('이 기기에서는 더 이상 알림을 보내지 않습니다.');
+};
+$('n-test').onclick=async function(){
+  try{
+    var reg=await swReg();
+    await reg.showNotification('알림 테스트',{body:'이 기기에서 복습 알림이 이렇게 보입니다.',icon:'icons/icon-192.png?v=2',tag:'test'});
+    nMsg('알림이 보이지 않으면 휴대폰의 방해 금지 모드나 앱 알림 설정을 확인해 주세요.');
+  }catch(e){nMsg('테스트 알림을 띄우지 못했습니다. ('+(e&&e.message||'unknown')+')');}
+};
+$('n-hour').addEventListener('change',function(){
+  if(state.mode!=='cloud'||!notify.enabled) return;
+  saveNotify(Object.assign({},notify,{hour:+this.value,tz:Intl.DateTimeFormat().resolvedOptions().timeZone}));
+  toast('알림 시간을 '+hourLabel(+this.value)+'로 바꿨습니다');
+});
+// Push tokens can change; refresh this device's token once per launch
+async function refreshNotifyToken(){
+  if(tokenChecked||!notify.devices||!notify.devices[deviceId()]||!pushSupported()||Notification.permission!=='granted'||!window.FIREBASE_VAPID_KEY) return;
+  tokenChecked=true;
+  try{
+    var token=await getPushToken(),cur=notify.devices[deviceId()];
+    if(token&&token!==cur.token){
+      var devices=Object.assign({},notify.devices);devices[deviceId()]=Object.assign({},cur,{token:token,updatedAt:new Date().toISOString()});
+      saveNotify(Object.assign({},notify,{devices:devices}));
+    }
+  }catch(e){}
+}
+renderNotify();
+
+// App shortcuts and notifications open #review or #add
+function openFromHash(){var h=location.hash.slice(1);if(h==='review'||h==='add'||h==='library'){history.replaceState(null,'',location.pathname);if(state.mode)setTab(h);else tab=h;}}
+window.addEventListener('hashchange',openFromHash);
+openFromHash();
 boot();
 })();
 </script>

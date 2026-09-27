@@ -24,3 +24,20 @@ users/{uid}/cards/{cardId}   표현 하나 (뜻, 예문, 복습 단계, 다음 �
 users/{uid}/meta/stats       날짜별 추가·복습 개수
 users/{uid}/meta/settings    하루 목표, 복습 방향
 ```
+
+## 복습 알림 (처음 한 번)
+
+매일 정한 시간에 GitHub Actions(`.github/workflows/reminders.yml`)가 `reminders/send.js`를 실행해 알림을 보냅니다.
+
+1. Firebase 콘솔 > 프로젝트 설정 > **클라우드 메시징** > 웹 푸시 인증서 > **키 쌍 생성** → 공개 키를 `firebase-config.js`의 `FIREBASE_VAPID_KEY`에 넣기.
+2. Firebase 콘솔 > 프로젝트 설정 > **서비스 계정** > **새 비공개 키 생성** → JSON 파일 다운로드.
+3. GitHub 저장소 > Settings > Secrets and variables > Actions > **New repository secret**
+   - Name: `FIREBASE_SERVICE_ACCOUNT`
+   - Secret: 2번 JSON 파일 내용 전체
+   - 이 키는 비밀번호와 같습니다. 저장소 파일이나 채팅에 붙여 넣지 마세요.
+4. 앱 > 오늘 > **복습 알림**에서 시간을 고르고 **이 기기에서 알림 켜기**.
+5. 확인: GitHub 저장소 > Actions > Review reminders > **Run workflow** 를 누르면 모든 기기에 테스트 알림이 갑니다.
+
+- iPhone은 홈 화면에 추가한 앱에서만 알림을 받을 수 있습니다 (iOS 16.4 이상).
+- GitHub 예약 작업은 몇 분 늦게 실행될 수 있습니다.
+- 저장소에 60일 동안 변경이 없으면 GitHub가 예약 작업을 멈춥니다. 그때는 Actions 탭에서 다시 켜 주세요.

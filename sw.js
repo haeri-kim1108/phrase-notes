@@ -1,13 +1,13 @@
 // Offline support: the app shell is cached so the app opens without a connection.
 // Firestore keeps its own offline copy of the records, so data requests are not touched here.
-const VERSION = 'v5';
+const VERSION = 'v6';
 const SHELL = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 const SHELL_FILES = [
   './', './index.html', './firebase-config.js', './manifest.webmanifest',
   './icons/icon-192.png?v=2', './icons/icon-512.png?v=2', './icons/apple-touch-icon.png?v=2', './icons/favicon-32.png?v=2',
 ];
-const FIREBASE_SDK = ['app', 'auth', 'firestore'].map(n => `https://www.gstatic.com/firebasejs/10.14.1/firebase-${n}-compat.js`);
+const FIREBASE_SDK = ['app', 'auth', 'firestore', 'messaging'].map(n => `https://www.gstatic.com/firebasejs/10.14.1/firebase-${n}-compat.js`);
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
@@ -60,4 +60,37 @@ self.addEventListener('fetch', event => {
       return res;
     })());
   }
+});
+
+// Daily review reminder sent by reminders/send.js through Firebase Cloud Messaging.
+// FCM wraps the message fields under "data".
+self.addEventListener('push', event => {
+  let msg = {};
+  try { msg = event.data ? event.data.json() : {}; } catch (e) {}
+  const d = msg.data || msg;
+  const title = d.title || (msg.notification && msg.notification.title) || '표현 복습 노트';
+  const body = d.body || (msg.notification && msg.notification.body) || '';
+  event.waitUntil(self.registration.showNotification(title, {
+    body,
+    icon: 'icons/icon-192.png?v=2',
+    badge: 'icons/favicon-32.png?v=2',
+    tag: 'daily-review',
+    renotify: true,
+    data: { url: d.url || './' },
+  }));
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const url = new URL((event.notification.data && event.notification.data.url) || './', self.registration.scope).href;
+  event.waitUntil((async () => {
+    const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const win = wins.find(w => w.url.startsWith(self.registration.scope));
+    if (win) {
+      await win.focus();
+      if ('navigate' in win) return win.navigate(url).catch(() => {});
+      return;
+    }
+    return self.clients.openWindow(url);
+  })());
 });
