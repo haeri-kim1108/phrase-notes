@@ -11,8 +11,9 @@ const TEST = process.argv.includes('--test');
 
 const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
 if (!sa.project_id) {
-  console.error('FIREBASE_SERVICE_ACCOUNT secret is missing. See README > 복습 알림.');
-  process.exit(1);
+  // Not set up yet: skip quietly so the hourly run does not fail and send error emails
+  console.log('FIREBASE_SERVICE_ACCOUNT secret is not set yet. See README > 복습 알림. Skipping.');
+  process.exit(0);
 }
 admin.initializeApp({ credential: admin.credential.cert(sa) });
 const db = admin.firestore();
