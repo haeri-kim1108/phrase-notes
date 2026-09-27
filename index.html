@@ -75,7 +75,7 @@ button,input,textarea,select{font:inherit;color:inherit}
 
 .banner{margin-top:14px;padding:10px 14px;border-radius:10px;background:var(--hard-soft);color:var(--ink);font-size:13px}
 main{padding-top:24px}
-.view{display:grid;gap:28px}
+.view{display:grid;grid-template-columns:minmax(0,1fr);gap:28px}
 h1,h2,h3{margin:0;text-wrap:balance}
 h1{font-family:var(--serif);font-weight:500;font-size:clamp(26px,4.4vw,36px);line-height:1.2;letter-spacing:-.01em}
 h2{font-size:16px;font-weight:600}
@@ -109,8 +109,10 @@ h2{font-size:16px;font-weight:600}
 .meter i{display:block;height:100%;background:var(--good);border-radius:3px}
 
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px}
+@media (max-width:520px){.panel{padding:16px}input,textarea,select{font-size:16px}}
+body{overflow-x:clip}
 .chart-wrap{overflow-x:auto}
-.chart-wrap svg{display:block;width:100%;min-width:520px;height:auto}
+.chart-wrap svg{display:block;width:100%;height:auto}
 .legend{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--muted);margin-top:8px}
 .legend i{display:inline-block;width:18px;height:0;border-top:2px solid var(--accent);vertical-align:middle;margin-right:6px}
 .legend i.dash{border-top:2px dashed var(--faint)}
@@ -120,8 +122,8 @@ h2{font-size:16px;font-weight:600}
 .ladder span{font-family:var(--mono);font-size:13px;padding:4px 10px;border-radius:999px;background:var(--surface-2)}
 .ladder em{color:var(--faint);font-style:normal;font-size:12px}
 
-.two{display:grid;grid-template-columns:1.2fr 1fr;gap:20px}
-@media (max-width:720px){.two{grid-template-columns:1fr}}
+.two{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px}
+@media (max-width:720px){.two{grid-template-columns:minmax(0,1fr)}}
 
 /* pills */
 .pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:2px 9px;border-radius:999px;white-space:nowrap}
@@ -674,16 +676,16 @@ function forecastSvg(t){
   var counts=[];for(var i=0;i<14;i++)counts.push(0);
   state.cards.forEach(function(c){var d=Math.max(0,diffDays(t,c.due));if(d<14)counts[d]++;});
   var max=Math.max(4,Math.max.apply(null,counts));
-  var W=420,H=170,L=8,R=8,T=20,B=34,bw=(W-L-R)/14;
+  var W=420,H=180,L=4,R=4,T=22,B=42,bw=(W-L-R)/14;
   var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="앞으로 14일 동안 날짜별 복습 예정 개수">';
   s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+(H-B)+'" y2="'+(H-B)+'" stroke="var(--line)"/>';
   var wd=['일','월','화','수','목','금','토'];
   counts.forEach(function(n,i){
     var h=(H-T-B)*n/max, xx=L+i*bw+3, d=addDays(t,i).split('-').map(Number), dt=new Date(d[0],d[1]-1,d[2]);
     s+='<rect x="'+xx+'" y="'+(H-B-h)+'" width="'+(bw-6)+'" height="'+Math.max(h,0)+'" rx="3" fill="'+(i===0?'var(--accent)':'var(--accent)')+'" fill-opacity="'+(i===0?1:.35)+'"/>';
-    if(n>0) s+='<text x="'+(xx+(bw-6)/2)+'" y="'+(H-B-h-5)+'" text-anchor="middle" font-size="11" fill="var(--ink)" font-family="IBM Plex Mono,monospace">'+n+'</text>';
-    s+='<text x="'+(xx+(bw-6)/2)+'" y="'+(H-B+14)+'" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="IBM Plex Mono,monospace">'+(i===0?'오늘':d[2])+'</text>';
-    s+='<text x="'+(xx+(bw-6)/2)+'" y="'+(H-B+27)+'" text-anchor="middle" font-size="9" fill="var(--faint)" font-family="IBM Plex Sans KR,sans-serif">'+wd[dt.getDay()]+'</text>';
+    if(n>0) s+='<text x="'+(xx+(bw-6)/2)+'" y="'+(H-B-h-6)+'" text-anchor="middle" font-size="14" fill="var(--ink)" font-family="IBM Plex Mono,monospace">'+n+'</text>';
+    s+='<text x="'+(xx+(bw-6)/2)+'" y="'+(H-B+17)+'" text-anchor="middle" font-size="13" fill="var(--muted)" font-family="IBM Plex Mono,monospace">'+(i===0?'오늘':d[2])+'</text>';
+    s+='<text x="'+(xx+(bw-6)/2)+'" y="'+(H-B+34)+'" text-anchor="middle" font-size="12" fill="var(--faint)" font-family="IBM Plex Sans KR,sans-serif">'+wd[dt.getDay()]+'</text>';
   });
   return s+'</svg>';
 }
