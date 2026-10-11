@@ -773,6 +773,11 @@ var session=null;
 function startSession(){
   var t=today();
   var ids=dueCards(t).map(function(c){return c.id;});
+  // Shuffle once per session so rendering and flipping keep the current card stable.
+  for(var i=ids.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var id=ids[i];ids[i]=ids[j];ids[j]=id;
+  }
   var dir=state.settings.dir||'ko';
   session={queue:ids,total:ids.length,done:0,logTotal:0,flipped:false,log:{again:0,hard:0,good:0,easy:0},dirs:{},day:t};
   ids.forEach(function(id){session.dirs[id]=dir==='mix'?(Math.random()<.5?'en':'ko'):dir;});
