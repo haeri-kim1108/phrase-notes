@@ -5,6 +5,7 @@
 //   node reminders/send.js           send reminders that are due this hour
 //   node reminders/send.js --test    send a test notification to every device now
 const admin = require('firebase-admin');
+const ReviewPlan = require('../review-plan.js');
 
 const APP_URL = 'https://haeri-kim1108.github.io/phrase-notes/';
 const TEST = process.argv.includes('--test');
@@ -26,11 +27,18 @@ function localNow(tz) {
 }
 
 async function messageFor(user, day) {
-  const due = (await user.collection('cards').where('due', '<=', day).count().get()).data().count;
+  const [cards, stats, settings] = await Promise.all([
+    user.collection('cards').get(),
+    user.collection('meta').doc('stats').get(),
+    user.collection('meta').doc('settings').get(),
+  ]);
+  const all = cards.docs.map(d => ({ ...d.data(), id: d.id }));
+  const reviewed = ReviewPlan.reviewedToday(all, stats.data() || {}, day);
+  const dates = ReviewPlan.plan(all, day, reviewed);
+  const due = Array.from(dates.values()).filter(date => date === day).length;
   if (due > 0) {
-    return { title: '복습할 시간이에요', body: `오늘 복습할 표현이 ${due}개 있어요. 잊기 전에 한 번 더 봐요.`, url: `${APP_URL}#review` };
+    return { title: '복습할 시간이에요', body: `오늘 복습할 표현이 ${due}개 있어요. 하루 30회 안에서 가볍게 복습해요.`, url: `${APP_URL}#review` };
   }
-  const [stats, settings] = await Promise.all([user.collection('meta').doc('stats').get(), user.collection('meta').doc('settings').get()]);
   const added = (((stats.data() || {}).days || {})[day] || {}).added || 0;
   const goal = (settings.data() || {}).goal || 5;
   if (added < goal) {

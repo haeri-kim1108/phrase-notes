@@ -274,8 +274,9 @@ details[open] summary{margin-bottom:10px}
         </div>
         <div class="panel">
           <div class="section-head"><h2>복습 간격 단계</h2></div>
-          <p class="hint" style="margin:0 0 10px">‘알맞음’을 누를 때마다 다음 단계로 넘어갑니다. ‘다시’를 누르면 처음 단계로 돌아가고 오늘 한 번 더 나옵니다.</p>
+          <p class="hint" style="margin:0 0 10px">‘알맞음’을 누를 때마다 다음 단계로 넘어갑니다. ‘다시’를 누르면 처음 단계로 돌아가고 하루 한도 안에서 한 번 더 나옵니다.</p>
           <div class="ladder" id="ladder"></div>
+          <p class="note">복습은 하루 최대 30회입니다. 오늘 완료한 복습과 ‘다시’ 반복도 포함하며, 초과분은 내일부터 하루 30개 이내로 자동 분산됩니다.</p>
         </div>
       </div>
 
@@ -417,6 +418,7 @@ details[open] summary{margin-bottom:10px}
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="review-plan.js"></script>
 <script>
 (function(){
 'use strict';
@@ -447,7 +449,7 @@ function stageInfo(s){
 }
 function ivLabel(n){return n===0?'오늘 다시':n<30?n+'일 후':n<365?Math.round(n/30)+'개월 후':'1년 후';}
 function dueLabel(c,t){
-  var d=diffDays(t,c.due);
+  var d=diffDays(t,plannedDue(c));
   if(d<0) return {t:(-d)+'일 밀림',now:true};
   if(d===0) return {t:'오늘 복습',now:true};
   if(d===1) return {t:'내일',now:false};
@@ -513,6 +515,7 @@ function boot(){
   });
 }
 function connectCloud(){
+  var cardsLoaded=false,statsLoaded=false;
   var fail=function(e){
     showBanner(e&&e.code==='permission-denied'
       ?'기록을 읽을 권한이 없습니다. Firebase 콘솔에서 Firestore 보안 규칙을 README대로 설정해 주세요.'
@@ -520,9 +523,9 @@ function connectCloud(){
   };
   unsubs.push(fdb.collection('users/'+user.uid+'/cards').onSnapshot(function(snap){
     var m=new Map();snap.docs.forEach(function(d){m.set(d.id,Object.assign({id:d.id},d.data()));});
-    state.cards=m;state.ready=true;render();
+    state.cards=m;cardsLoaded=true;state.ready=statsLoaded;render();
   },fail));
-  unsubs.push(userDoc('meta/stats').onSnapshot(function(s){if(s.exists){state.stats=Object.assign({days:{}},s.data());render();}},fail));
+  unsubs.push(userDoc('meta/stats').onSnapshot(function(s){if(s.exists)state.stats=Object.assign({days:{}},s.data());statsLoaded=true;state.ready=cardsLoaded;render();},fail));
   unsubs.push(userDoc('meta/settings').onSnapshot(function(s){if(s.exists){state.settings=Object.assign({goal:5,dir:'ko'},s.data());syncSettingsInputs();render();}},fail));
   unsubs.push(userDoc('meta/notify').onSnapshot(function(s){notify=Object.assign(notifyDefaults(),s.exists?s.data():{});renderNotify();refreshNotifyToken();},fail));
 }
@@ -664,7 +667,23 @@ var canSpeak='speechSynthesis' in window && typeof SpeechSynthesisUtterance!=='u
 function speak(text){try{window.speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=.92;window.speechSynthesis.speak(u);}catch(e){}}
 var SPEAK_SVG='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="none"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
 
-function dueCards(t){return Array.from(state.cards.values()).filter(function(c){return c.due<=t;}).sort(function(a,b){return a.due<b.due?-1:a.due>b.due?1:(a.stage||0)-(b.stage||0);});}
+var plannedDates=new Map();
+function reviewedCount(t){return ReviewPlan.reviewedToday(Array.from(state.cards.values()),state.stats,t);}
+function remainingReviews(t){return Math.max(0,ReviewPlan.LIMIT-reviewedCount(t));}
+function refreshPlan(t){plannedDates=ReviewPlan.plan(Array.from(state.cards.values()),t,reviewedCount(t));}
+function plannedDue(c){return plannedDates.get(c.id)||c.due;}
+function dueCards(t){
+  refreshPlan(t);
+  return Array.from(state.cards.values()).filter(function(c){return plannedDue(c)<=t;})
+    .sort(function(a,b){return a.due.localeCompare(b.due)||(a.stage||0)-(b.stage||0)||a.id.localeCompare(b.id);});
+}
+function nextReviewDay(){return Array.from(plannedDates.values()).sort()[0];}
+function reviewInterval(c,g,t){
+  var r=schedule(c,g),candidate=Object.assign({},c,{due:addDays(t,r.interval),stage:r.stage});
+  var cards=Array.from(state.cards.values()).map(function(x){return x.id===c.id?candidate:x;});
+  var dates=ReviewPlan.plan(cards,t,reviewedCount(t)+1);
+  return diffDays(t,dates.get(c.id));
+}
 function streak(t){
   var d=state.stats.days||{},n=0,cur=t;
   var active=function(x){var v=d[x];return v&&((v.reviewed||0)+(v.added||0))>0;};
@@ -692,7 +711,7 @@ function renderStatic(){
 }
 function forecastSvg(t){
   var counts=[];for(var i=0;i<14;i++)counts.push(0);
-  state.cards.forEach(function(c){var d=Math.max(0,diffDays(t,c.due));if(d<14)counts[d]++;});
+  state.cards.forEach(function(c){var d=Math.max(0,diffDays(t,plannedDue(c)));if(d<14)counts[d]++;});
   var max=Math.max(4,Math.max.apply(null,counts));
   var W=420,H=180,L=4,R=4,T=22,B=42,bw=(W-L-R)/14;
   var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="앞으로 14일 동안 날짜별 복습 예정 개수">';
@@ -727,25 +746,24 @@ function renderToday(t,due){
   $('today-date').textContent=(d.getMonth()+1)+'월 '+d.getDate()+'일 '+['일','월','화','수','목','금','토'][d.getDay()]+'요일';
   if(!state.ready) return;
   var all=Array.from(state.cards.values());
-  var dd=(state.stats.days||{})[t]||{};
   var added=all.filter(function(c){return c.createdDay===t;}).length;
   var goal=Math.max(1,+state.settings.goal||5);
-  var reviewed=dd.reviewed||0;
+  var reviewed=reviewedCount(t);
   var st=streak(t);
   var long=all.filter(function(c){return (c.stage||0)>=5;}).length;
   if(!all.length){$('today-title').textContent='첫 표현을 추가해 보세요';$('today-sub').textContent='오늘 배운 표현을 기록하면 잊어버리기 전에 다시 보여 드립니다.';}
   else if(due>0){$('today-title').textContent='오늘 복습할 표현이 '+due+'개 있습니다';$('today-sub').textContent='지금 복습하면 기억이 더 오래 유지됩니다. 약 '+Math.max(1,Math.round(due*0.3))+'분이면 끝납니다.';}
-  else{$('today-title').textContent='오늘 복습을 모두 마쳤습니다';var nx=all.map(function(c){return c.due;}).sort()[0];$('today-sub').textContent=nx?'다음 복습은 '+dueLabel({due:nx},t).t+'입니다. 새 표현을 추가해 보세요.':'';}
+  else{$('today-title').textContent=reviewed>=ReviewPlan.LIMIT?'오늘의 복습 한도 30회를 채웠습니다':'오늘 복습을 모두 마쳤습니다';var nx=nextReviewDay();$('today-sub').textContent=nx?'다음 복습은 '+dueLabel({due:nx},t).t+'입니다. 새 표현을 추가해 보세요.':'';}
   var sb=$('start-btn');
   if(due>0){sb.disabled=false;sb.textContent='복습 시작 ('+due+'개)';sb.onclick=function(){session=null;setTab('review');};}
   else{sb.disabled=false;sb.textContent='새 표현 추가';sb.onclick=function(){setTab('add');};}
   $('stats').innerHTML=
-    stat('오늘 복습할 표현',due+'<small>개</small>',reviewed?'오늘 '+reviewed+'번 복습함':'아직 복습 전')+
+    stat('오늘 복습할 표현',due+'<small>개</small>','오늘 '+reviewed+' / '+ReviewPlan.LIMIT+'회 복습함')+
     stat('오늘 새 표현',added+'<small> / '+goal+'</small>','<div class="meter"><i style="width:'+Math.min(100,added/goal*100)+'%"></i></div>')+
     stat('연속 학습',st+'<small>일</small>',st?'매일 이어가고 있어요':'오늘부터 시작')+
     stat('전체 표현',all.length+'<small>개</small>','장기 기억 '+long+'개');
   $('forecast').innerHTML=forecastSvg(t);
-  var wk=0;state.cards.forEach(function(c){var x=diffDays(t,c.due);if(x>=1&&x<=7)wk++;});
+  var wk=0;state.cards.forEach(function(c){var x=diffDays(t,plannedDue(c));if(x>=1&&x<=7)wk++;});
   $('forecast-total').textContent='다음 7일 동안 '+wk+'개';
 }
 function stat(k,v,d){return '<div class="stat"><span class="k">'+k+'</span><span class="v">'+v+'</span><span class="d">'+d+'</span></div>';}
@@ -756,26 +774,27 @@ function startSession(){
   var t=today();
   var ids=dueCards(t).map(function(c){return c.id;});
   var dir=state.settings.dir||'ko';
-  session={queue:ids,total:ids.length,done:0,flipped:false,log:{again:0,hard:0,good:0,easy:0},dirs:{},day:t};
+  session={queue:ids,total:ids.length,done:0,logTotal:0,flipped:false,log:{again:0,hard:0,good:0,easy:0},dirs:{},day:t};
   ids.forEach(function(id){session.dirs[id]=dir==='mix'?(Math.random()<.5?'en':'ko'):dir;});
 }
 function renderReview(t){
   var v=$('view-review');
   if(!state.ready){v.innerHTML='<div class="empty"><div class="hint">표현을 불러오는 중입니다.</div></div>';return;}
   if(!session||session.day!==t||(session.total===0&&dueCards(t).length)) startSession();
-  // drop cards deleted elsewhere
-  session.queue=session.queue.filter(function(id){return state.cards.has(id);});
+  // Honor changes from other devices and the daily budget, including Again retries.
+  var allowed=new Set(dueCards(t).map(function(c){return c.id;}));
+  session.queue=session.queue.filter(function(id){return allowed.has(id);}).slice(0,remainingReviews(t));
   if(!session.queue.length){
     if(session.total===0){
       var all=Array.from(state.cards.values());
-      var nx=all.map(function(c){return c.due;}).sort()[0];
+      var nx=nextReviewDay();
       v.innerHTML='<div class="panel empty"><div class="big">오늘은 복습할 표현이 없습니다</div><p class="hint" style="margin:0">'+(nx?'다음 복습은 '+dueLabel({due:nx},t).t+'입니다. 복습은 정해진 날에 해야 효과가 큽니다.':'표현을 추가하면 여기에서 복습할 수 있습니다.')+'</p><button class="btn primary" id="go-add">새 표현 추가</button></div>';
       $('go-add').onclick=function(){setTab('add');};
     }else{
       var L=session.log;
-      v.innerHTML='<div class="panel empty"><div class="eyebrow">복습 완료</div><div class="big">'+session.total+'개 표현을 모두 복습했습니다</div>'+
+      v.innerHTML='<div class="panel empty"><div class="eyebrow">복습 완료</div><div class="big">'+session.done+'개 표현을 완료했습니다</div>'+
         '<div class="summary"><span class="pill short">다시 '+L.again+'</span><span class="pill mid">어려움 '+L.hard+'</span><span class="pill long">알맞음 '+L.good+'</span><span class="pill new">쉬움 '+L.easy+'</span></div>'+
-        '<p class="hint" style="margin:0">각 표현은 기억 정도에 맞춰 다음 복습 날짜가 정해졌습니다.</p><div class="form-actions"><button class="btn" id="go-today">오늘 화면으로</button><button class="btn primary" id="go-add">새 표현 추가</button></div></div>';
+        '<p class="hint" style="margin:0">이번에는 '+session.logTotal+'회 복습했습니다. 남은 표현과 다음 복습은 하루 30회 이내로 나눠집니다.</p><div class="form-actions"><button class="btn" id="go-today">오늘 화면으로</button><button class="btn primary" id="go-add">새 표현 추가</button></div></div>';
       $('go-today').onclick=function(){setTab('today');};$('go-add').onclick=function(){setTab('add');};
     }
     return;
@@ -796,7 +815,7 @@ function renderReview(t){
       (c.note?'<div class="memo">'+esc(c.note)+'</div>':'')+'</div>';
   }
   var actions=session.flipped
-    ?'<div class="actions">'+['again','hard','good','easy'].map(function(g,i){var n=schedule(c,g).interval;return '<button class="grade '+g+'" data-g="'+g+'">'+{again:'다시',hard:'어려움',good:'알맞음',easy:'쉬움'}[g]+'<small>'+ivLabel(n)+'</small><kbd>'+(i+1)+'</kbd></button>';}).join('')+'</div>'
+    ?'<div class="actions">'+['again','hard','good','easy'].map(function(g,i){var n=reviewInterval(c,g,t);return '<button class="grade '+g+'" data-g="'+g+'">'+{again:'다시',hard:'어려움',good:'알맞음',easy:'쉬움'}[g]+'<small>'+ivLabel(n)+'</small><kbd>'+(i+1)+'</kbd></button>';}).join('')+'</div>'
     :'<button class="btn primary lg reveal" id="reveal">정답 보기 <span class="mono" style="font-size:12px;opacity:.7">Space</span></button>';
   v.innerHTML='<div class="rv-top"><span class="hint num">'+session.done+' / '+session.total+' 완료</span><div class="progress"><i style="width:'+pct+'%"></i></div><span class="hint num">남은 카드 '+session.queue.length+'</span></div>'+
     '<article class="flash"><div class="flash-meta"><span class="pill '+si.k+'">'+si.t+'</span><span class="mono">'+(c.reps?'복습 '+c.reps+'회':'첫 복습')+(c.lapses?' · 잊음 '+c.lapses+'회':'')+'</span></div>'+front+back+'</article>'+actions;
@@ -807,11 +826,15 @@ function renderReview(t){
 function flip(){if(session){session.flipped=true;render();}}
 function grade(g){
   if(!session||!session.flipped||!session.queue.length) return;
+  var day=today();
+  if(session.day!==day){session=null;render();return;}
+  var allowed=new Set(dueCards(day).map(function(c){return c.id;}));
+  if(!remainingReviews(day)||!allowed.has(session.queue[0])){render();return;}
   var id=session.queue.shift();var c=state.cards.get(id);if(!c) return;
   var t=today();var r=schedule(c,g);
   var hist=(c.history||[]).concat([{d:t,g:g}]).slice(-30);
   var nc=Object.assign({},c,{stage:r.stage,due:addDays(t,r.interval),lastReviewed:t,reps:(c.reps||0)+1,lapses:(c.lapses||0)+(g==='again'?1:0),history:hist});
-  session.log[g]++;
+  session.log[g]++;session.logTotal++;
   if(g==='again'){session.queue.splice(Math.min(3,session.queue.length),0,id);}
   else session.done++;
   session.flipped=false;
@@ -882,7 +905,7 @@ $('add-form').addEventListener('submit',function(e){
   putCard(newCard(f));bumpStat('added',1);
   this.reset();setExRows([]);$('f-en').focus();
   $('f-msg').textContent=dup?'같은 표현이 이미 목록에 있어 하나 더 추가했습니다.':'';
-  toast('저장했습니다. 오늘 복습 목록에 추가됐어요.');
+  toast('저장했습니다. 하루 30회 한도에 맞춰 복습 일정에 추가됐어요.');
 });
 function startEdit(id){
   var c=state.cards.get(id);if(!c) return;
@@ -933,7 +956,7 @@ function renderLibrary(t){
     if(!matchFilter(c,libFilter,t)) return false;
     if(!q) return true;
     return (c.en+' '+c.ko+' '+getExamples(c).map(function(x){return x.en+' '+x.ko;}).join(' ')+' '+(c.tags||[]).join(' ')).toLowerCase().indexOf(q)>=0;
-  }).sort(function(a,b){return a.due<b.due?-1:a.due>b.due?1:(a.createdAt<b.createdAt?1:-1);});
+  }).sort(function(a,b){return plannedDue(a)<plannedDue(b)?-1:plannedDue(a)>plannedDue(b)?1:(a.createdAt<b.createdAt?1:-1);});
   var box=$('lib-list');
   if(!state.ready){box.innerHTML='<p class="hint">불러오는 중입니다.</p>';return;}
   if(!list.length){box.innerHTML='<div class="panel empty"><div class="hint">'+(all.length?'조건에 맞는 표현이 없습니다.':'아직 저장한 표현이 없습니다.')+'</div></div>';return;}
@@ -943,7 +966,7 @@ function renderLibrary(t){
     if(open){
       h+='<div class="item-detail">'+examplesHtml(c)+(c.note?'<div class="memo">'+esc(c.note)+'</div>':'')+
         ((c.tags||[]).length?'<div class="chips">'+c.tags.map(function(x){return '<span class="tag">'+esc(x)+'</span>';}).join('')+'</div>':'')+
-        '<div class="facts"><span>추가 '+esc(c.createdDay)+'</span><span>복습 '+(c.reps||0)+'회</span><span>잊음 '+(c.lapses||0)+'회</span><span>다음 복습 '+esc(c.due)+'</span></div>'+
+        '<div class="facts"><span>추가 '+esc(c.createdDay)+'</span><span>복습 '+(c.reps||0)+'회</span><span>잊음 '+(c.lapses||0)+'회</span><span>다음 복습 '+esc(plannedDue(c))+'</span></div>'+
         '<div class="form-actions">'+(canSpeak?'<button class="btn ghost" data-say="'+esc(c.en)+'">'+SPEAK_SVG+' 발음</button>':'')+'<button class="btn" data-edit="'+c.id+'">수정</button>'+
         (confirmId===c.id?'<span class="confirm">이 표현과 복습 기록을 삭제할까요? <button class="btn danger" data-del="'+c.id+'">삭제</button><button class="btn ghost" data-keep>취소</button></span>':'<button class="btn ghost danger" data-ask="'+c.id+'">삭제</button>')+
         '<button class="btn ghost" data-reset="'+c.id+'">처음부터 다시 외우기</button></div></div>';
@@ -955,12 +978,12 @@ function renderLibrary(t){
   box.querySelectorAll('[data-ask]').forEach(function(b){b.onclick=function(){confirmId=b.dataset.ask;renderLibrary(t);};});
   box.querySelectorAll('[data-keep]').forEach(function(b){b.onclick=function(){confirmId=null;renderLibrary(t);};});
   box.querySelectorAll('[data-del]').forEach(function(b){b.onclick=function(){confirmId=null;openId=null;removeCard(b.dataset.del);toast('삭제했습니다');};});
-  box.querySelectorAll('[data-reset]').forEach(function(b){b.onclick=function(){var c=state.cards.get(b.dataset.reset);if(c){putCard(Object.assign({},c,{stage:0,due:today()}));toast('오늘 복습 목록에 다시 넣었습니다');}};});
+  box.querySelectorAll('[data-reset]').forEach(function(b){b.onclick=function(){var c=state.cards.get(b.dataset.reset);if(c){putCard(Object.assign({},c,{stage:0,due:today()}));toast('하루 30회 한도에 맞춰 복습 일정에 다시 넣었습니다');}};});
   box.querySelectorAll('[data-say]').forEach(function(b){b.onclick=function(){speak(b.dataset.say);};});
 }
 function matchFilter(c,f,t){
   if(f==='all') return true;
-  if(f==='due') return c.due<=t;
+  if(f==='due') return plannedDue(c)<=t;
   return stageInfo(c.stage).k===f;
 }
 

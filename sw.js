@@ -1,10 +1,10 @@
 // Offline support: the app shell is cached so the app opens without a connection.
 // Firestore keeps its own offline copy of the records, so data requests are not touched here.
-const VERSION = 'v6';
+const VERSION = 'v7';
 const SHELL = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 const SHELL_FILES = [
-  './', './index.html', './firebase-config.js', './manifest.webmanifest',
+  './', './index.html', './review-plan.js', './firebase-config.js', './manifest.webmanifest',
   './icons/icon-192.png?v=2', './icons/icon-512.png?v=2', './icons/apple-touch-icon.png?v=2', './icons/favicon-32.png?v=2',
 ];
 const FIREBASE_SDK = ['app', 'auth', 'firestore', 'messaging'].map(n => `https://www.gstatic.com/firebasejs/10.14.1/firebase-${n}-compat.js`);
