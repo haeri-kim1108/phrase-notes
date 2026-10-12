@@ -125,3 +125,36 @@ test('reminders use the same daily capacity and skip review prompts after the ca
   completed=30;
   assert.equal(await context.messageFor(user,DAY),null);
 });
+
+
+test('new cards join an existing session without replacing the flipped card', () => {
+  const app=appContext();
+  app.state.cards=new Map(cards(2).map(c=>[c.id,c]));
+  app.startSession();
+  const first=app.session.queue[0];
+  app.session.flipped=true;
+  app.state.cards.set('new',{id:'new',due:DAY,stage:0});
+  app.syncSessionQueue(DAY,new Set(app.dueCards(DAY).map(c=>c.id)));
+  assert.equal(app.session.queue[0],first);
+  assert.equal(app.session.flipped,true);
+  assert.equal(app.session.queue.includes('new'),true);
+  assert.equal(app.session.total,3);
+  app.syncSessionQueue(DAY,new Set(app.dueCards(DAY).map(c=>c.id)));
+  assert.equal(app.session.queue.length,3);
+  assert.equal(app.session.total,3);
+});
+
+test('new cards reopen a completed session while respecting the daily cap', () => {
+  const app=appContext();
+  app.state.cards=new Map(cards(1).map(c=>[c.id,c]));
+  app.startSession();app.session.flipped=true;app.grade('good');
+  assert.equal(app.session.queue.length,0);
+  app.state.cards.set('new',{id:'new',due:DAY,stage:0});
+  app.syncSessionQueue(DAY,new Set(app.dueCards(DAY).map(c=>c.id)));
+  assert.deepEqual(Array.from(app.session.queue),['new']);
+  assert.equal(app.session.done,1);
+  assert.equal(app.session.total,2);
+  app.state.stats.days[DAY].reviewed=30;
+  app.syncSessionQueue(DAY,new Set(app.dueCards(DAY).map(c=>c.id)));
+  assert.equal(app.session.queue.length,0);
+});
