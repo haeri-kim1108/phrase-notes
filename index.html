@@ -675,7 +675,7 @@ function plannedDue(c){return plannedDates.get(c.id)||c.due;}
 function dueCards(t){
   refreshPlan(t);
   return Array.from(state.cards.values()).filter(function(c){return plannedDue(c)<=t;})
-    .sort(function(a,b){return a.due.localeCompare(b.due)||(a.stage||0)-(b.stage||0)||a.id.localeCompare(b.id);});
+    .sort(function(a,b){return ReviewPlan.compare(a,b,t);});
 }
 function nextReviewDay(){return Array.from(plannedDates.values()).sort()[0];}
 function reviewInterval(c,g,t){
@@ -855,7 +855,7 @@ function grade(g){
   var hist=(c.history||[]).concat([{d:t,g:g}]).slice(-30);
   var nc=Object.assign({},c,{stage:r.stage,due:addDays(t,r.interval),lastReviewed:t,reps:(c.reps||0)+1,lapses:(c.lapses||0)+(g==='again'?1:0),history:hist});
   session.log[g]++;session.logTotal++;
-  if(g==='again'){session.queue.splice(Math.min(3,session.queue.length),0,id);}
+  if(g==='again'){session.queue.push(id);}
   else session.done++;
   session.flipped=false;
   bumpStat('reviewed',1);

@@ -15,12 +15,19 @@
     // Card and stats snapshots may arrive separately; honor the larger count.
     return Math.max(0,recorded,history);
   }
+  function compare(a,b,day){
+    // Today's new learning gets priority only when already due.
+    var aNew=a.createdDay===day&&(a.due||day)<=day;
+    var bNew=b.createdDay===day&&(b.due||day)<=day;
+    return Number(bNew)-Number(aNew)||
+      (a.due||day).localeCompare(b.due||day)||
+      (a.stage||0)-(b.stage||0)||String(a.id).localeCompare(String(b.id));
+  }
   function plan(cards,day,reviewed){
     var dates=new Map(),counts=new Map([[day,Math.max(0,reviewed||0)]]);
     var cursor=day;
     cards.slice().sort(function(a,b){
-      return (a.due||day).localeCompare(b.due||day)||
-        (a.stage||0)-(b.stage||0)||String(a.id).localeCompare(String(b.id));
+      return compare(a,b,day);
     }).forEach(function(c){
       if(c.due>cursor) cursor=c.due;
       while((counts.get(cursor)||0)>=LIMIT) cursor=nextDay(cursor);
@@ -29,7 +36,7 @@
     });
     return dates;
   }
-  var api={LIMIT:LIMIT,reviewedToday:reviewedToday,plan:plan};
+  var api={LIMIT:LIMIT,compare:compare,reviewedToday:reviewedToday,plan:plan};
   if(typeof module==='object'&&module.exports) module.exports=api;
   else root.ReviewPlan=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

@@ -158,3 +158,60 @@ test('new cards reopen a completed session while respecting the daily cap', () =
   app.syncSessionQueue(DAY,new Set(app.dueCards(DAY).map(c=>c.id)));
   assert.equal(app.session.queue.length,0);
 });
+
+test('today learning takes priority over backlog within remaining capacity', () => {
+  const fresh=cards(5,DAY,'new').map(c=>({...c,createdDay:DAY,stage:0}));
+  const all=[...cards(40,'2026-10-01'),...fresh];
+  const result=ReviewPlan.plan(all,DAY,27);
+  assert.equal(result.get('new000'),DAY);
+  assert.equal(result.get('new002'),DAY);
+  assert.equal(result.get('new003'),'2026-10-12');
+  assert.equal(result.get('c000'),'2026-10-12');
+  assert.deepEqual([...result],[...ReviewPlan.plan([...all].reverse(),DAY,27)]);
+  assert.equal(counts(result)[DAY],3);
+});
+
+test('today learning never brings future reviews forward or exceeds the cap', () => {
+  const fresh={id:'new',createdDay:DAY,due:'2026-10-15',stage:1};
+  assert.equal(ReviewPlan.plan([...cards(40),fresh],DAY,0).get('new'),'2026-10-15');
+  fresh.due=DAY;
+  assert.equal(ReviewPlan.plan([fresh],DAY,30).get('new'),'2026-10-12');
+});
+
+test('today learning is included in an overflowing app review session', () => {
+  const app=appContext();
+  app.state.cards.set('new',{id:'new',createdDay:DAY,due:DAY,stage:0});
+  app.startSession();
+  assert.equal(app.session.queue.length,30);
+  assert.equal(app.session.queue.includes('new'),true);
+});
+
+test('Again waits behind all other queued cards and stays there after synchronization', () => {
+  const app=appContext();
+  app.state.cards=new Map(cards(8).map(c=>[c.id,c]));
+  app.startSession();
+  const original=Array.from(app.session.queue);
+  app.session.flipped=true;
+  app.grade('again');
+  const expected=[...original.slice(1),original[0]];
+  assert.deepEqual(Array.from(app.session.queue),expected);
+  app.syncSessionQueue(DAY,new Set(app.dueCards(DAY).map(c=>c.id)));
+  assert.deepEqual(Array.from(app.session.queue),expected);
+  for(let i=0;i<original.length-1;i++){
+    assert.notEqual(app.session.queue[0],original[0]);
+    app.session.flipped=true;
+    app.grade('good');
+  }
+  assert.deepEqual(Array.from(app.session.queue),[original[0]]);
+});
+
+test('Again can repeat immediately when no other cards remain', () => {
+  const app=appContext();
+  app.state.cards=new Map(cards(1).map(c=>[c.id,c]));
+  app.startSession();
+  const id=app.session.queue[0];
+  app.session.flipped=true;
+  app.grade('again');
+  assert.deepEqual(Array.from(app.session.queue),[id]);
+  assert.equal(app.session.flipped,false);
+});
