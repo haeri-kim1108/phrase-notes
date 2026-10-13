@@ -15,11 +15,15 @@
     // Card and stats snapshots may arrive separately; honor the larger count.
     return Math.max(0,recorded,history);
   }
+  function pendingAgain(c,day){
+    var history=c.history||[],last=history[history.length-1];
+    return !!(last&&last.d===day&&last.g==='again'&&(c.due||day)<=day);
+  }
   function compare(a,b,day){
     // Today's new learning gets priority only when already due.
     var aNew=a.createdDay===day&&(a.due||day)<=day;
     var bNew=b.createdDay===day&&(b.due||day)<=day;
-    return Number(bNew)-Number(aNew)||
+    return Number(pendingAgain(b,day))-Number(pendingAgain(a,day))||Number(bNew)-Number(aNew)||
       (a.due||day).localeCompare(b.due||day)||
       (a.stage||0)-(b.stage||0)||String(a.id).localeCompare(String(b.id));
   }

@@ -215,3 +215,36 @@ test('Again can repeat immediately when no other cards remain', () => {
   assert.deepEqual(Array.from(app.session.queue),[id]);
   assert.equal(app.session.flipped,false);
 });
+test('Again remains today with a full overdue backlog and returns at the last available slot', () => {
+  const app=appContext();
+  app.state.cards=new Map(cards(50,'2026-10-01').map(c=>[c.id,c]));
+  app.startSession();
+  const id='c029';
+  app.session.queue=[id,...app.session.queue.filter(x=>x!==id)];
+  const card=app.state.cards.get(id);
+  assert.equal(app.reviewInterval(card,'again',DAY),0);
+  app.session.flipped=true;app.grade('again');
+  app.syncSessionQueue(DAY,new Set(app.dueCards(DAY).map(c=>c.id)));
+  assert.equal(app.plannedDue(app.state.cards.get(id)),DAY);
+  assert.equal(app.session.queue.length,29);
+  assert.equal(app.session.queue.at(-1),id);
+  for(let i=0;i<28;i++){
+    assert.notEqual(app.session.queue[0],id);
+    app.session.flipped=true;app.grade('good');
+    app.syncSessionQueue(DAY,new Set(app.dueCards(DAY).map(c=>c.id)));
+  }
+  assert.deepEqual(Array.from(app.session.queue),[id]);
+  app.session.flipped=true;app.grade('good');
+  assert.equal(app.reviewedCount(DAY),30);
+});
+
+test('pending Again survives a new session and outranks new learning', () => {
+  const app=appContext(20);
+  const retry={id:'retry',due:DAY,history:[{d:DAY,g:'again'}],stage:0};
+  app.state.cards=new Map([...cards(40).map(c=>({...c,createdDay:DAY})),retry].map(c=>[c.id,c]));
+  app.startSession();
+  assert.equal(app.session.queue.includes('retry'),true);
+  const resolved={...retry,history:[...retry.history,{d:DAY,g:'good'}],due:'2026-10-12'};
+  app.state.cards.set('retry',resolved);
+  assert.equal(app.dueCards(DAY).some(c=>c.id==='retry'),false);
+});

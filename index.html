@@ -679,7 +679,7 @@ function dueCards(t){
 }
 function nextReviewDay(){return Array.from(plannedDates.values()).sort()[0];}
 function reviewInterval(c,g,t){
-  var r=schedule(c,g),candidate=Object.assign({},c,{due:addDays(t,r.interval),stage:r.stage});
+  var r=schedule(c,g),candidate=Object.assign({},c,{due:addDays(t,r.interval),stage:r.stage,history:(c.history||[]).concat([{d:t,g:g}]).slice(-30)});
   var cards=Array.from(state.cards.values()).map(function(x){return x.id===c.id?candidate:x;});
   var dates=ReviewPlan.plan(cards,t,reviewedCount(t)+1);
   return diffDays(t,dates.get(c.id));
