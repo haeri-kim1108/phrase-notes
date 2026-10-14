@@ -15,6 +15,12 @@
     // Card and stats snapshots may arrive separately; honor the larger count.
     return Math.max(0,recorded,history);
   }
+  function seenToday(c,day){
+    return c.lastReviewed===day||(c.history||[]).some(function(h){return h.d===day;});
+  }
+  function reviewedCardsToday(cards,day){
+    return cards.filter(function(c){return seenToday(c,day);}).length;
+  }
   function pendingAgain(c,day){
     var history=c.history||[],last=history[history.length-1];
     return !!(last&&last.d===day&&last.g==='again'&&(c.due||day)<=day);
@@ -28,11 +34,16 @@
       (a.stage||0)-(b.stage||0)||String(a.id).localeCompare(String(b.id));
   }
   function plan(cards,day,reviewed){
-    var dates=new Map(),counts=new Map([[day,Math.max(0,reviewed||0)]]);
+    var dates=new Map(),counts=new Map([[day,Math.max(reviewedCardsToday(cards,day),reviewed||0)]]);
     var cursor=day;
     cards.slice().sort(function(a,b){
       return compare(a,b,day);
     }).forEach(function(c){
+      // Already counted in today's distinct cards; repetitions cost no extra slot.
+      if(seenToday(c,day)&&(c.due||day)<=day){
+        dates.set(c.id,day);
+        return;
+      }
       if(c.due>cursor) cursor=c.due;
       while((counts.get(cursor)||0)>=LIMIT) cursor=nextDay(cursor);
       dates.set(c.id,cursor);
@@ -40,7 +51,7 @@
     });
     return dates;
   }
-  var api={LIMIT:LIMIT,compare:compare,reviewedToday:reviewedToday,plan:plan};
+  var api={LIMIT:LIMIT,compare:compare,reviewedCardsToday:reviewedCardsToday,reviewedToday:reviewedToday,plan:plan};
   if(typeof module==='object'&&module.exports) module.exports=api;
   else root.ReviewPlan=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

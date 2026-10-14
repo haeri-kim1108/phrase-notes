@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const ReviewPlan = require('../review-plan.js');
 const DAY = '2026-10-11';
 const cards = (n, due = DAY, prefix = 'c') => Array.from({ length: n }, (_, i) => ({ id: prefix + String(i).padStart(3, '0'), due, stage: 1 }));
+const completedCards = n => cards(n,'2026-11-01','done').map(c=>({...c,lastReviewed:DAY,history:[{d:DAY,g:'good'}]}));
 const counts = dates => Array.from(dates.values()).reduce((all, d) => { all[d] = (all[d] || 0) + 1; return all; }, {});
 
 test('50 overdue reviews become 30 today and 20 tomorrow without mutating cards', () => {
@@ -53,7 +54,7 @@ test('review count handles repeated Again attempts and separately arriving snaps
 
 const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
 function appContext(completed = 0) {
-  const state = { cards: new Map(cards(50).map(c => [c.id, c])), stats: { days: { [DAY]: { reviewed: completed } } }, settings: {} };
+  const state = { cards: new Map([...cards(50),...completedCards(completed)].map(c => [c.id, c])), stats: { days: { [DAY]: { reviewed: completed } } }, settings: {} };
   const context = vm.createContext({ ReviewPlan, state, Map, Set, today: () => DAY,
     addDays: (day, n) => { const d = new Date(day + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); },
     diffDays: (a,b) => Math.round((Date.parse(b)-Date.parse(a))/86400000),
@@ -80,16 +81,20 @@ test('sessions and reloads share the remaining daily budget', () => {
   assert.equal(appContext(30).dueCards(DAY).length, 0);
 });
 
-test('Again cannot exceed the daily limit, and its next date preview matches rollover', () => {
-  const app = appContext(29);
+test('Again repeats beyond 30 attempts without admitting a 31st card, including reload', () => {
+  const app=appContext(29);
   app.startSession();
-  const card = app.state.cards.get(app.session.queue[0]);
-  assert.equal(app.reviewInterval(card, 'again', DAY), 1);
-  app.session.flipped=true; app.grade('again');
-  app.session.flipped=true; app.grade('again');
-  assert.equal(app.reviewedCount(DAY), 30);
-  assert.equal(app.dueCards(DAY).length, 0);
-  assert.equal(app.plannedDue(app.state.cards.get(card.id)), '2026-10-12');
+  const id=app.session.queue[0];
+  assert.equal(app.reviewInterval(app.state.cards.get(id),'again',DAY),0);
+  for(let i=0;i<35;i++){
+    app.session.flipped=true;app.grade('again');
+    app.startSession();
+    assert.deepEqual(Array.from(app.session.queue),[id]);
+  }
+  assert.equal(app.reviewedCardCount(DAY),30);
+  assert.equal(app.reviewedCount(DAY),64);
+  app.session.flipped=true;app.grade('good');
+  assert.equal(app.dueCards(DAY).length,0);
 });
 
 test('a stale session at midnight cannot grade a card under the previous day budget', () => {
@@ -99,25 +104,13 @@ test('a stale session at midnight cannot grade a card under the previous day bud
 });
 
 
-test('review screen ends the session at the daily cap even with Again queued', () => {
-  const app = appContext(29);
-  app.startSession();app.session.flipped=true;app.grade('again');
-  const elements = new Map();
-  app.$ = id => { if (!elements.has(id)) elements.set(id, {}); return elements.get(id); };
-  app.state.ready=true;
-  vm.runInContext(html.slice(html.indexOf('function renderReview'), html.indexOf('function flip')), app);
-  app.renderReview(DAY);
-  assert.equal(app.session.queue.length, 0);
-  assert.match(elements.get('view-review').innerHTML, /복습 완료/);
-});
-
 test('reminders use the same daily capacity and skip review prompts after the cap', async () => {
   const source=fs.readFileSync(path.join(__dirname,'../reminders/send.js'),'utf8');
   const context=vm.createContext({ReviewPlan,APP_URL:'https://example.com/'});
   vm.runInContext(source.slice(source.indexOf('async function messageFor'),source.indexOf('async function main')),context);
   let completed=20;
   const user={collection(name){
-    if(name==='cards')return {async get(){return {docs:cards(50).map(c=>({id:c.id,data:()=>c}))};}};
+    if(name==='cards')return {async get(){return {docs:[...cards(50),...completedCards(completed)].map(c=>({id:c.id,data:()=>c}))};}};
     return {doc(id){return {async get(){return {data:()=>id==='stats'?{days:{[DAY]:{reviewed:completed,added:5}}}:{goal:5}};}};}};
   }};
   const message=await context.messageFor(user,DAY);
@@ -154,7 +147,7 @@ test('new cards reopen a completed session while respecting the daily cap', () =
   assert.deepEqual(Array.from(app.session.queue),['new']);
   assert.equal(app.session.done,1);
   assert.equal(app.session.total,2);
-  app.state.stats.days[DAY].reviewed=30;
+  completedCards(29).forEach(c=>app.state.cards.set(c.id,c));
   app.syncSessionQueue(DAY,new Set(app.dueCards(DAY).map(c=>c.id)));
   assert.equal(app.session.queue.length,0);
 });
@@ -226,16 +219,17 @@ test('Again remains today with a full overdue backlog and returns at the last av
   app.session.flipped=true;app.grade('again');
   app.syncSessionQueue(DAY,new Set(app.dueCards(DAY).map(c=>c.id)));
   assert.equal(app.plannedDue(app.state.cards.get(id)),DAY);
-  assert.equal(app.session.queue.length,29);
+  assert.equal(app.session.queue.length,30);
   assert.equal(app.session.queue.at(-1),id);
-  for(let i=0;i<28;i++){
+  for(let i=0;i<29;i++){
     assert.notEqual(app.session.queue[0],id);
     app.session.flipped=true;app.grade('good');
     app.syncSessionQueue(DAY,new Set(app.dueCards(DAY).map(c=>c.id)));
   }
   assert.deepEqual(Array.from(app.session.queue),[id]);
   app.session.flipped=true;app.grade('good');
-  assert.equal(app.reviewedCount(DAY),30);
+  assert.equal(app.reviewedCount(DAY),31);
+  assert.equal(app.reviewedCardCount(DAY),30);
 });
 
 test('pending Again survives a new session and outranks new learning', () => {
@@ -247,4 +241,33 @@ test('pending Again survives a new session and outranks new learning', () => {
   const resolved={...retry,history:[...retry.history,{d:DAY,g:'good'}],due:'2026-10-12'};
   app.state.cards.set('retry',resolved);
   assert.equal(app.dueCards(DAY).some(c=>c.id==='retry'),false);
+});
+
+test('distinct card count ignores repeat attempts and legacy attempt totals', () => {
+  const all=[{lastReviewed:DAY,history:Array.from({length:30},()=>({d:DAY,g:'again'}))}];
+  assert.equal(ReviewPlan.reviewedCardsToday(all,DAY),1);
+  assert.equal(ReviewPlan.reviewedCardsToday(all,'2026-10-12'),0);
+  const app=appContext();
+  app.state.stats.days[DAY].reviewed=100;
+  assert.equal(app.dueCards(DAY).length,30);
+});
+
+test('all thirty cards can repeat without expanding the daily list', () => {
+  const app=appContext();
+  app.startSession();
+  const chosen=new Set(app.session.queue);
+  for(let i=0;i<60;i++){
+    assert.equal(chosen.has(app.session.queue[0]),true);
+    app.session.flipped=true;app.grade('again');
+    app.syncSessionQueue(DAY,new Set(app.dueCards(DAY).map(c=>c.id)));
+    assert.equal(app.session.queue.length,30);
+  }
+  assert.equal(app.reviewedCardCount(DAY),30);
+  assert.equal(app.reviewedCount(DAY),60);
+  for(let i=0;i<30;i++){
+    app.session.flipped=true;app.grade('good');
+    app.syncSessionQueue(DAY,new Set(app.dueCards(DAY).map(c=>c.id)));
+  }
+  assert.equal(app.session.queue.length,0);
+  assert.equal(app.reviewedCount(DAY),90);
 });
