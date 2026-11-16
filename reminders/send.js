@@ -64,7 +64,7 @@ async function main() {
 
     const msg = TEST
       ? { title: '알림 테스트', body: '복습 알림이 잘 도착했어요.', url: APP_URL }
-      : await messageFor(user, now.day);
+      : await messageFor(user, ReviewPlan.learningDay(now.day, now.hour));
     if (!msg) { await ref.update({ lastSentDay: now.day }); continue; }
 
     const res = await admin.messaging().sendEach(devices.map(([, d]) => ({

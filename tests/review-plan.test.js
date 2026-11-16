@@ -271,3 +271,12 @@ test('all thirty cards can repeat without expanding the daily list', () => {
   assert.equal(app.session.queue.length,0);
   assert.equal(app.reviewedCount(DAY),90);
 });
+
+test('learning day rolls over at 2am including year and leap-day boundaries', () => {
+  for (const [day, previous] of [['2026-11-16', '2026-11-15'], ['2027-01-01', '2026-12-31'], ['2028-03-01', '2028-02-29']]) {
+    assert.equal(ReviewPlan.learningDay(day, 0), previous);
+    assert.equal(ReviewPlan.learningDay(day, 1), previous);
+    assert.equal(ReviewPlan.learningDay(day, 2), day);
+    assert.equal(ReviewPlan.learningDay(day, 23), day);
+  }
+});

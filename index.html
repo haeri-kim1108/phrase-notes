@@ -424,7 +424,7 @@ details[open] summary{margin-bottom:10px}
 'use strict';
 /* ---------- time helpers ---------- */
 function dayStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-function today(){return dayStr(new Date());}
+function today(){var d=new Date();return ReviewPlan.learningDay(dayStr(d),d.getHours());}
 function addDays(s,n){var p=s.split('-').map(Number);return dayStr(new Date(p[0],p[1]-1,p[2]+n));}
 function diffDays(a,b){var x=a.split('-').map(Number),y=b.split('-').map(Number);return Math.round((Date.UTC(y[0],y[1]-1,y[2])-Date.UTC(x[0],x[1]-1,x[2]))/86400000);}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}

@@ -3,6 +3,12 @@
 (function(root){
   'use strict';
   var LIMIT=30;
+  // Learning days roll over at 02:00 local time.
+  function learningDay(day,hour){
+    if(hour>=2) return day;
+    var p=day.split('-').map(Number);
+    return new Date(Date.UTC(p[0],p[1]-1,p[2]-1)).toISOString().slice(0,10);
+  }
   function nextDay(day){
     var p=day.split('-').map(Number),d=new Date(Date.UTC(p[0],p[1]-1,p[2]+1));
     return d.toISOString().slice(0,10);
@@ -51,7 +57,7 @@
     });
     return dates;
   }
-  var api={LIMIT:LIMIT,compare:compare,reviewedCardsToday:reviewedCardsToday,reviewedToday:reviewedToday,plan:plan};
+  var api={learningDay:learningDay,LIMIT:LIMIT,compare:compare,reviewedCardsToday:reviewedCardsToday,reviewedToday:reviewedToday,plan:plan};
   if(typeof module==='object'&&module.exports) module.exports=api;
   else root.ReviewPlan=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
