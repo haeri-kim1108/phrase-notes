@@ -598,7 +598,7 @@ var OBJ='me|you|him|her|it|us|them|someone|somebody|everyone|anyone';
 var POSS='my|your|his|her|its|our|their';
 var REFL='myself|yourself|himself|herself|itself|ourselves|yourselves|themselves|oneself';
 function reEsc(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/'/g,"['’]");}
-function wordForms(w){
+function baseWordForms(w){
   var f=[w],c='bcdfghjklmnpqrstvz';
   var add=function(){for(var i=0;i<arguments.length;i++)f.push(arguments[i]);};
   if(/(s|x|z|ch|sh|o)$/.test(w)) add(w+'es'); else add(w+'s');
@@ -615,6 +615,26 @@ function wordForms(w){
   if(/c$/.test(w)) add(w+'ked',w+'king');
   if(IRREG[w]){IRREG[w].forEach(function(x){f.push(x);});}
   return f;
+}
+// Match tense variants even when the saved expression uses a past-tense verb.
+function wordForms(w){
+  var bases=[w];
+  Object.keys(IRREG).forEach(function(base){
+    if(IRREG[base].indexOf(w)>=0) bases.push(base);
+  });
+  if(bases.length===1&&w.length>3&&/ed$/.test(w)){
+    // walked -> walk, liked -> like, tried -> try, stopped -> stop.
+    var stem=w.slice(0,-2);
+    if(/ied$/.test(w)) bases.push(w.slice(0,-3)+'y');
+    else{
+      bases.push(stem,w.slice(0,-1));
+      if(/([^aeiouwxy])\1$/.test(stem)) bases.push(stem.slice(0,-1));
+      if(/ck$/.test(stem)) bases.push(stem.slice(0,-1));
+    }
+  }
+  var forms=[];
+  bases.forEach(function(base){forms=forms.concat(baseWordForms(base));});
+  return forms;
 }
 function wordPattern(w){
   w=w.replace(/’/g,"'");
