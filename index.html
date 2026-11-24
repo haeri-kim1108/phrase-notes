@@ -804,14 +804,16 @@ function startSession(){
   prioritizeSessionRetries(t);
 }
 function prioritizeSessionRetries(t){
-  // Keep a revealed card stable; otherwise put former long-term retries last.
-  var keep=session.flipped?session.queue.slice(0,1):[];
-  var rest=session.queue.slice(keep.length),normal=[],later=[];
-  rest.forEach(function(id){
+  // Reorder only short/long-term Again slots, preserving other cards and a revealed card.
+  var slots=[],shortRetries=[],longRetries=[];
+  session.queue.forEach(function(id,i){
+    if(i===0&&session.flipped) return;
     var c=state.cards.get(id);
-    (c&&ReviewPlan.isLongTermAgain(c,t)?later:normal).push(id);
+    if(c&&ReviewPlan.isShortTermAgain(c,t)){slots.push(i);shortRetries.push(id);}
+    else if(c&&ReviewPlan.isLongTermAgain(c,t)){slots.push(i);longRetries.push(id);}
   });
-  session.queue=keep.concat(normal,later);
+  var retries=shortRetries.concat(longRetries);
+  slots.forEach(function(slot,i){session.queue[slot]=retries[i];});
 }
 function syncSessionQueue(t,allowed){
   var previous=session.queue[0];

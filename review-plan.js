@@ -34,6 +34,9 @@
   function againStage(c,day){
     return pendingAgain(c,day)&&c.againFromStage!=null?c.againFromStage:(c.stage||0);
   }
+  function isShortTermAgain(c,day){
+    return pendingAgain(c,day)&&againStage(c,day)<=2;
+  }
   function isLongTermAgain(c,day){
     return pendingAgain(c,day)&&againStage(c,day)>=5;
   }
@@ -63,7 +66,7 @@
     });
     return dates;
   }
-  var api={againStage:againStage,isLongTermAgain:isLongTermAgain,learningDay:learningDay,LIMIT:LIMIT,compare:compare,reviewedCardsToday:reviewedCardsToday,reviewedToday:reviewedToday,plan:plan};
+  var api={isShortTermAgain:isShortTermAgain,againStage:againStage,isLongTermAgain:isLongTermAgain,learningDay:learningDay,LIMIT:LIMIT,compare:compare,reviewedCardsToday:reviewedCardsToday,reviewedToday:reviewedToday,plan:plan};
   if(typeof module==='object'&&module.exports) module.exports=api;
   else root.ReviewPlan=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

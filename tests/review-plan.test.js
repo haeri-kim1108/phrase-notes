@@ -281,11 +281,11 @@ test('learning day rolls over at 2am including year and leap-day boundaries', ()
   }
 });
 
-test('former long-term Again stays behind short-term reviews across retries and reloads', () => {
+test('long-term Again stays behind short-term Again across retries and reloads', () => {
   const app=appContext();
   app.state.cards=new Map([
     {id:'long',stage:5,due:DAY},
-    {id:'short',stage:1,due:DAY}
+    {id:'short',stage:0,due:DAY,againFromStage:1,history:[{d:DAY,g:'again'}]}
   ].map(c=>[c.id,c]));
   app.startSession();
   app.session.queue=['long','short'];
@@ -336,4 +336,19 @@ test('long-term retries retain their today slot at the distinct card limit', () 
   const dates=ReviewPlan.plan(all,DAY);
   assert.equal(dates.get('long'),DAY);
   assert.equal(cards(40).some(c=>dates.get(c.id)===DAY),false);
+});
+
+test('only short and long-term Again slots change; ordinary and middle-stage reviews stay put', () => {
+  const app=appContext();
+  const retry=(id,stage)=>({id,stage:0,due:DAY,againFromStage:stage,history:[{d:DAY,g:'again'}]});
+  app.state.cards=new Map([
+    retry('long',5),{id:'normal',stage:1,due:DAY},retry('middle',3),retry('short',2)
+  ].map(c=>[c.id,c]));
+  app.startSession();
+  app.session.queue=['long','normal','middle','short'];
+  app.prioritizeSessionRetries(DAY);
+  assert.deepEqual(Array.from(app.session.queue),['short','normal','middle','long']);
+  app.session.queue=['long','normal'];
+  app.prioritizeSessionRetries(DAY);
+  assert.deepEqual(Array.from(app.session.queue),['long','normal']);
 });
