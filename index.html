@@ -801,6 +801,17 @@ function startSession(){
   var dir=state.settings.dir||'ko';
   session={queue:ids,total:ids.length,done:0,logTotal:0,flipped:false,log:{again:0,hard:0,good:0,easy:0},dirs:{},day:t};
   ids.forEach(function(id){session.dirs[id]=dir==='mix'?(Math.random()<.5?'en':'ko'):dir;});
+  prioritizeSessionRetries(t);
+}
+function prioritizeSessionRetries(t){
+  // Keep a revealed card stable; otherwise put former long-term retries last.
+  var keep=session.flipped?session.queue.slice(0,1):[];
+  var rest=session.queue.slice(keep.length),normal=[],later=[];
+  rest.forEach(function(id){
+    var c=state.cards.get(id);
+    (c&&ReviewPlan.isLongTermAgain(c,t)?later:normal).push(id);
+  });
+  session.queue=keep.concat(normal,later);
 }
 function syncSessionQueue(t,allowed){
   var previous=session.queue[0];
@@ -815,6 +826,7 @@ function syncSessionQueue(t,allowed){
     }
   });
   if(session.queue[0]!==previous) session.flipped=false;
+  prioritizeSessionRetries(t);
 }
 function renderReview(t){
   var v=$('view-review');
@@ -872,13 +884,14 @@ function grade(g){
   var id=session.queue.shift();var c=state.cards.get(id);if(!c) return;
   var t=today();var r=schedule(c,g);
   var hist=(c.history||[]).concat([{d:t,g:g}]).slice(-30);
-  var nc=Object.assign({},c,{stage:r.stage,due:addDays(t,r.interval),lastReviewed:t,reps:(c.reps||0)+1,lapses:(c.lapses||0)+(g==='again'?1:0),history:hist});
+  var nc=Object.assign({},c,{stage:r.stage,due:addDays(t,r.interval),lastReviewed:t,againFromStage:g==='again'?ReviewPlan.againStage(c,t):null,reps:(c.reps||0)+1,lapses:(c.lapses||0)+(g==='again'?1:0),history:hist});
   session.log[g]++;session.logTotal++;
   if(g==='again'){session.queue.push(id);}
   else session.done++;
   session.flipped=false;
   bumpStat('reviewed',1);
   putCard(nc);
+  prioritizeSessionRetries(t);
 }
 document.addEventListener('keydown',function(e){
   if(tab!=='review'||!session) return;

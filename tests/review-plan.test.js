@@ -280,3 +280,60 @@ test('learning day rolls over at 2am including year and leap-day boundaries', ()
     assert.equal(ReviewPlan.learningDay(day, 23), day);
   }
 });
+
+test('former long-term Again stays behind short-term reviews across retries and reloads', () => {
+  const app=appContext();
+  app.state.cards=new Map([
+    {id:'long',stage:5,due:DAY},
+    {id:'short',stage:1,due:DAY}
+  ].map(c=>[c.id,c]));
+  app.startSession();
+  app.session.queue=['long','short'];
+  app.session.flipped=true;app.grade('again');
+  assert.equal(app.state.cards.get('long').stage,0);
+  assert.equal(app.state.cards.get('long').againFromStage,5);
+  assert.deepEqual(Array.from(app.session.queue),['short','long']);
+  for(let i=0;i<35;i++){
+    app.session.queue=['long','short'];
+    app.session.flipped=true;app.grade('again');
+    app.startSession();
+    assert.deepEqual(Array.from(app.session.queue),['short','long']);
+  }
+  app.session.flipped=true;app.grade('again');
+  assert.deepEqual(Array.from(app.session.queue),['short','long']);
+  app.syncSessionQueue(DAY,new Set(app.dueCards(DAY).map(c=>c.id)));
+  assert.deepEqual(Array.from(app.session.queue),['short','long']);
+});
+
+test('new short-term reviews go ahead of long-term retries without replacing a revealed card', () => {
+  const app=appContext();
+  app.state.cards=new Map([['long',{id:'long',stage:0,due:DAY,againFromStage:6,history:[{d:DAY,g:'again'}]}]]);
+  app.startSession();
+  app.session.flipped=true;
+  app.state.cards.set('short',{id:'short',stage:2,due:DAY});
+  app.syncSessionQueue(DAY,new Set(app.dueCards(DAY).map(c=>c.id)));
+  assert.equal(app.session.queue[0],'long');
+  assert.equal(app.session.flipped,true);
+  app.grade('again');
+  assert.deepEqual(Array.from(app.session.queue),['short','long']);
+});
+
+test('long-term retry priority ends after success or the learning day changes', () => {
+  const retry={id:'long',stage:0,due:DAY,againFromStage:5,history:[{d:DAY,g:'again'}]};
+  assert.equal(ReviewPlan.isLongTermAgain(retry,DAY),true);
+  assert.equal(ReviewPlan.isLongTermAgain(retry,'2026-10-12'),false);
+  assert.equal(ReviewPlan.againStage(retry,'2026-10-12'),0);
+  const app=appContext();
+  app.state.cards=new Map([['long',retry]]);
+  app.startSession();app.session.flipped=true;app.grade('good');
+  assert.equal(app.state.cards.get('long').againFromStage,null);
+  assert.equal(ReviewPlan.isLongTermAgain(app.state.cards.get('long'),DAY),false);
+});
+
+test('long-term retries retain their today slot at the distinct card limit', () => {
+  const retry={id:'long',stage:0,due:DAY,againFromStage:8,history:[{d:DAY,g:'again'}]};
+  const all=[...completedCards(29),...cards(40),retry];
+  const dates=ReviewPlan.plan(all,DAY);
+  assert.equal(dates.get('long'),DAY);
+  assert.equal(cards(40).some(c=>dates.get(c.id)===DAY),false);
+});

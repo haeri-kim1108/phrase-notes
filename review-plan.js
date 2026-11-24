@@ -31,6 +31,12 @@
     var history=c.history||[],last=history[history.length-1];
     return !!(last&&last.d===day&&last.g==='again'&&(c.due||day)<=day);
   }
+  function againStage(c,day){
+    return pendingAgain(c,day)&&c.againFromStage!=null?c.againFromStage:(c.stage||0);
+  }
+  function isLongTermAgain(c,day){
+    return pendingAgain(c,day)&&againStage(c,day)>=5;
+  }
   function compare(a,b,day){
     // Today's new learning gets priority only when already due.
     var aNew=a.createdDay===day&&(a.due||day)<=day;
@@ -57,7 +63,7 @@
     });
     return dates;
   }
-  var api={learningDay:learningDay,LIMIT:LIMIT,compare:compare,reviewedCardsToday:reviewedCardsToday,reviewedToday:reviewedToday,plan:plan};
+  var api={againStage:againStage,isLongTermAgain:isLongTermAgain,learningDay:learningDay,LIMIT:LIMIT,compare:compare,reviewedCardsToday:reviewedCardsToday,reviewedToday:reviewedToday,plan:plan};
   if(typeof module==='object'&&module.exports) module.exports=api;
   else root.ReviewPlan=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
